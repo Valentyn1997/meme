@@ -124,7 +124,10 @@ def custom_choice(update, context):
 def received_information(update, context):
     user_data = context.user_data
     text = update.message.text
+    print(user_data)
+    print(1)
     category = user_data['choice']
+    print(category)
     user_data[category] = text
     del user_data['choice']
 
