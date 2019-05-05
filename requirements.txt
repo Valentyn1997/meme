@@ -11,3 +11,5 @@ python-dotenv>=0.5.1
 
 # telegram bot
 python-telegram-bot==12.0.0b1
+telepot
+pymongo
