@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class TelegramBot:
 
-    def __init__(self, token):
+    def __init__(self, token, mongo_adress):
         # Bot connection
         self.token = token
         self.updater = Updater(self.token, use_context=True)
@@ -25,10 +25,11 @@ class TelegramBot:
         logger.info('Bot connected.')
 
         # Database
-        self.db = MongoClient().meme
+        self.db = MongoClient(mongo_adress).meme
         self.db_messages_collection = self.db.messages
         self.loader = MessagesLoader(self.db_messages_collection)
         self.saver = MessageSaver(self.db_messages_collection)
+        logger.info('Remote MongoDB cluster connected.')
 
         #Initing active chats
         self.active_chats = {}
@@ -36,6 +37,7 @@ class TelegramBot:
         #Command handlers
         self.dp.add_handler(CommandHandler("start", self._start))
         self.dp.add_handler(CommandHandler("help", self._help))
+        logger.info('Command handlers added.')
 
         # Text messages handler
         self.dp.add_handler(MessageHandler(Filters.text, self._handle_message, pass_user_data=True, pass_chat_data=True))
