@@ -1,4 +1,4 @@
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient, ASCENDING, DESCENDING
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,7 +9,7 @@ class MessagesLoader:
 
     def load(self, chat_id, max_messages_to_load):
         result = []
-        for message in self.collection.find({"chat.id": chat_id}).sort("date", ASCENDING):
+        for message in self.collection.find({"chat.id": chat_id}).sort("date", DESCENDING):
             result.append(message)
             if len(result) >= max_messages_to_load:
                 break
@@ -24,7 +24,7 @@ class MessageSaver:
 
     def save_one(self, message):
         post_id = self.collection.insert_one(message.to_dict()).inserted_id
-        logger.info(f'Message {message.message_id} saved: {post_id}.')
+        logger.info(f'Message {message.message_id} saved ({message.text}): {post_id}.')
 
 
 class Chat:
@@ -37,9 +37,9 @@ class Chat:
             self.messages_queue = loader.load(self.chat_id, self.max_queue_size)
 
     def add_message(self, message):
-        self.messages_queue.append(message.to_dict())
+        self.messages_queue = [message.to_dict()] + self.messages_queue
         if len(self.messages_queue) > self.max_queue_size:
-            self.messages_queue.pop(0)
+            self.messages_queue.pop(-1)
         logger.info(f'Message {message.message_id} added to chat {self.chat_id}.')
 
     def __eq__(self, other):

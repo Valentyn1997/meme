@@ -3,13 +3,10 @@ from uuid import uuid4
 import numpy as np
 
 from pymongo import MongoClient
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, RegexHandler, ConversationHandler
-from telegram import InlineQueryResultArticle, ParseMode, \
-    InputTextMessageContent, InlineQueryResultCachedSticker, InlineQueryResult
-from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters, TypeHandler
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.bot import Bot
-from telegram_bot.messages import MessagesLoader, MessageSaver, Chat
+from telegram import InlineQueryResultCachedSticker
+from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters
+from telegram import ReplyKeyboardMarkup
+from src.telegram_bot.messages import MessagesLoader, MessageSaver, Chat
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -21,7 +18,7 @@ BASIC_STICKER_SET = 'BigFaceEmoji'
 
 class TelegramBot:
 
-    def __init__(self, token, mongo_adress):
+    def __init__(self, token, mongo_adress, model):
         # Bot connection
         self.token = token
         self.updater = Updater(self.token, use_context=True)
@@ -48,9 +45,9 @@ class TelegramBot:
         logger.info('Text messages handler added.')
 
         # Sticker messages handler
-        self.dp.add_handler(
-            MessageHandler(Filters.sticker, self._handle_message, pass_user_data=True, pass_chat_data=True))
-        logger.info('Sticker messages handler added.')
+        # self.dp.add_handler(
+        #     MessageHandler(Filters.sticker, self._handle_message, pass_user_data=True, pass_chat_data=True))
+        # logger.info('Sticker messages handler added.')
 
         #Images messages handler
         self.dp.add_handler(MessageHandler(Filters.photo, self._handle_message, pass_user_data=True, pass_chat_data=True))
@@ -67,6 +64,9 @@ class TelegramBot:
 
         #Stickers / emojis to answer
         self.stiker_set = self.updater.bot.get_sticker_set(BASIC_STICKER_SET).stickers
+
+        # ML Model
+        self.model = model
 
 
     def start_bot(self):
@@ -117,11 +117,11 @@ class TelegramBot:
         current_chat.add_message(update.message)
         self.saver.save_one(update.message)
 
-        results = [[sticker.emoji for sticker in self.stiker_set]]
-        markup = ReplyKeyboardMarkup(results, one_time_keyboard=True, resize_keyboard=True, selective=True)
+        # results = [[sticker.emoji for sticker in self.stiker_set]]
+        # markup = ReplyKeyboardMarkup(results, one_time_keyboard=True, resize_keyboard=True, selective=True)
 
         # self.updater.bot.edit_message_reply_markup(chat_id=MEME_CHAT_ID, message_id=884, reply_markup=markup)
-        self.updater.bot.send_message(chat_id=MEME_CHAT_ID, text='choose:', reply_markup=markup)
+        # self.updater.bot.send_message(chat_id=MEME_CHAT_ID, text='choose:', reply_markup=markup)
         # update.message.edit_text(, )
 
 
@@ -137,12 +137,18 @@ class TelegramBot:
 
         current_chat = self.active_chats[MEME_CHAT_ID]
 
-        results = self.stiker_set[0:4]
+        # Prediction
+        results_emojis = self.model.predict(current_chat.messages_queue[0]['text'])
+        results_stickers = [sticker for sticker in self.stiker_set
+                            if sticker.emoji == results_emojis[0]]
+        logger.info(f'Recommending {len(results_stickers)}.')
+
+        # Sending recommendation
         results = [
             InlineQueryResultCachedSticker(id=uuid4(),
                                            type='sticker',
                                            sticker_file_id=sticker.file_id)
-            for sticker in results]
+            for sticker in results_stickers]
 
         update.inline_query.answer(results, cache_time=1)
 
