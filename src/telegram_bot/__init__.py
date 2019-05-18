@@ -13,7 +13,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-MEME_CHAT_ID = -312547156
+MEME_CHAT_ID = -391131828
 BASIC_STICKER_SET = 'BigFaceEmoji'
 
 class TelegramBot:
@@ -139,9 +139,12 @@ class TelegramBot:
 
         # Prediction
         results_emojis = self.model.predict(current_chat.messages_queue[0]['text'])
-        results_stickers = [sticker for sticker in self.stiker_set
-                            if sticker.emoji == results_emojis[0]]
-        logger.info(f'Recommending {len(results_stickers)}.')
+        results_stickers = []
+
+        # Inner join with stickerpack
+        for emoji in results_emojis:
+            results_stickers.extend([sticker for sticker in self.stiker_set if sticker.emoji == emoji])
+        logger.info(f'Recommending {len(results_stickers)} stickers.')
 
         # Sending recommendation
         results = [
