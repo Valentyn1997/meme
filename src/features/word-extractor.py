@@ -1,31 +1,22 @@
 # -*- coding: utf-8 -*-
-''' Extracts lists of words from a given input to be used for later vocabulary
-    generation or for creating tokenized datasets.
-    Supports functionality for handling different file types and
-    filtering/processing of this input.
-'''
-
-from __future__ import division, print_function, unicode_literals
-
+"""
+Extracts lists of words from a given input in order to be used for vocabulary
+generation and for tokenized datasets.
+"""
 import re
 import unicodedata
 import numpy as np
 from text_unidecode import unidecode
 
-from src.features.tokenizer import RE_MENTION, tokenize
-from torchmoji.filter_utils import (convert_linebreaks,
-                                           convert_nonbreaking_space,
-                                           correct_length,
-                                           extract_emojis,
-                                           mostly_english,
-                                           non_english_user,
-                                           process_word,
-                                           punct_word,
-                                           remove_control_chars,
-                                           remove_variation_selectors,
-                                           separate_emojis_and_text)
-
-unicode = str  # for Python 3
+from tokenizer import RE_MENTION, tokenize
+from filter_utils import (convert_linebreaks,
+                          valid_length,
+                          extract_emojis,
+                          mostly_english,
+                          non_english_user,
+                          process_word,
+                          punct_word,
+                          remove_variation_selectors)
 
 MENTION_RE = re.compile(RE_MENTION)
 VALID_PUNCTUATION = """.:;<=>?@`~!"#$'()+,-"""
@@ -33,6 +24,7 @@ VALID_PUNCTUATION = """.:;<=>?@`~!"#$'()+,-"""
 
 class WordExtractor:
     """ Extracts words in Unicode format """
+
     def __init__(self, stream, remove_variation_selectors=True):
         self.stream = stream
         self.remove_variation_selectors = remove_variation_selectors
@@ -78,9 +70,7 @@ class WordExtractor:
             if len(decoded_c) == 0:
                 word_converted_punct_marks.append(c)
             else:
-                allowed_punct = punct_word(
-                        decoded_c,
-                        punctuation=VALID_PUNCTUATION)
+                allowed_punct = punct_word(decoded_c, punct=VALID_PUNCTUATION)
                 if allowed_punct:
                     word_converted_punct_marks.append(decoded_c)
                 else:
@@ -117,9 +107,7 @@ class WordExtractor:
         if not words:
             return False, []
 
-        post_valid, post_words = self.data_postprocess_filtering(words)
-
-        return post_valid, post_words
+        return self.data_postprocess_filtering(words)
 
     def convert_to_array(self):
         sentences = []
@@ -139,6 +127,7 @@ class WordExtractor:
 
 class MsgWordExtractor(WordExtractor):
     """ Returns array of ASCII sentences for a given msg input """
+
     def __init__(self, stream, wanted_emojis=None, english_words=None,
                  non_english_user_set=None,
                  ignore_url_msg=True,
@@ -172,14 +161,13 @@ class MsgWordExtractor(WordExtractor):
         fields = line.strip().split("\t")
         valid, emojis = self.validated_msg(fields)
         text = fields[9].replace('\\n', '') \
-                        .replace('\\r', '') \
-                        .replace('&amp', '&') if valid else ''
+            .replace('\\r', '') \
+            .replace('&amp', '&') if valid else ''
         return valid, text
 
     def data_postprocess_filtering(self, words):
-        valid_length = correct_length(words, 1, None)
-        valid_english, n_words, n_english = mostly_english(words,
-                                                           self.english_words)
+        valid_length = valid_length(words, 1, None)
+        valid_english, n_words, n_english = mostly_english(words, self.english_words)
         if valid_length and valid_english:
             return True, words
         else:

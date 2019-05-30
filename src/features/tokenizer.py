@@ -1,5 +1,5 @@
 """
-Splits up a Unicode string into a list of tokens.
+Extracts and converys a Unicode string to tokens.
 Supports:
 - Abbreviations
 - URLs
@@ -8,19 +8,18 @@ Supports:
 - @mentions
 - emojis
 - emoticons (limited)
-Multiple consecutive symbols are processed as a single token.
+More than 2 consecutive symbols are processed as a single token.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
 
-# Basic patterns.
+# Basic patterns
 RE_NUM = r'[0-9]+'
 RE_WORD = r'[a-zA-Z]+'
 RE_WHITESPACE = r'\s+'
 RE_ANY = r'.'
 
-# Combined words such as 'red-haired' or 'CUSTOM_TOKEN'
+# Combined words with - and _
 RE_COMB = r'[a-zA-Z]+[-_][a-zA-Z]+'
 
 # English-specific patterns
@@ -32,24 +31,21 @@ TITLES = [
     r'Mrs\.',
     r'Dr\.',
     r'Prof\.',
-    ]
-# Ensure case insensitivity
+]
+# Case insensitivity
 RE_TITLES = r'|'.join([r'(?i)' + t for t in TITLES])
 
-# Symbols have to be created as separate patterns in order to match consecutive
-# identical symbols.
+# Symbols as separate patterns
 SYMBOLS = r'()<!?.,/\'\"-_=\\§|´ˇ°[]<>{}~$^&*;:%+\xa3€`'
 RE_SYMBOL = r'|'.join([re.escape(s) + r'+' for s in SYMBOLS])
 
-# Hash symbols and at symbols have to be defined separately in order to not
-# clash with hashtags and mentions if there are multiple - i.e.
-# ##hello -> ['#', '#hello'] instead of ['##', 'hello']
+# Hash symbols and @ symbols
 SPECIAL_SYMBOLS = r'|#+(?=#[a-zA-Z0-9_]+)|@+(?=@[a-zA-Z0-9_]+)|#+|@+'
 RE_SYMBOL += SPECIAL_SYMBOLS
 
 RE_ABBREVIATIONS = r'\b(?<!\.)(?:[A-Za-z]\.){2,}'
 
-# Twitter-specific patterns
+# Message-specific patterns
 RE_HASHTAG = r'#[a-zA-Z0-9_]+'
 RE_MENTION = r'@[a-zA-Z0-9_]+'
 
@@ -63,14 +59,14 @@ EMOTICONS_START = [
     r':',
     r'=',
     r';',
-    ]
+]
 EMOTICONS_MID = [
     r'-',
     r',',
     r'^',
     '\'',
     '\"',
-    ]
+]
 EMOTICONS_END = [
     r'D',
     r'd',
@@ -85,7 +81,7 @@ EMOTICONS_END = [
     r'/',
     r'|',
     '\\',
-    ]
+]
 EMOTICONS_EXTRA = [
     r'-_-',
     r'x_x',
@@ -96,7 +92,7 @@ EMOTICONS_EXTRA = [
     r'):',
     r');',
     r'(;',
-    ]
+]
 
 RE_EMOTICON = r'|'.join([re.escape(s) for s in EMOTICONS_EXTRA])
 for s in EMOTICONS_START:
@@ -104,7 +100,6 @@ for s in EMOTICONS_START:
         for e in EMOTICONS_END:
             RE_EMOTICON += '|{0}{1}?{2}+'.format(re.escape(s), re.escape(m), re.escape(e))
 
-# safe for all python
 RE_EMOJI = r"""\ud83c[\udf00-\udfff]|\ud83d[\udc00-\ude4f\ude80-\udeff]|[\u2600-\u26FF\u2700-\u27BF]"""
 
 # List of matched token patterns, ordered from most specific to least specific.
@@ -124,19 +119,26 @@ TOKENS = [
     RE_SYMBOL,
     RE_EMOJI,
     RE_ANY
-    ]
+]
 
-# List of ignored token patterns
 IGNORED = [
     RE_WHITESPACE
-    ]
+]
 
 # Final pattern
 RE_PATTERN = re.compile(r'|'.join(IGNORED) + r'|(' + r'|'.join(TOKENS) + r')', re.UNICODE)
+
+SPECIAL_PREFIX = 'CUSTOM_'
+SPECIAL_TOKENS = ['CUSTOM_MASK',
+                  'CUSTOM_UNKNOWN',
+                  'CUSTOM_AT',
+                  'CUSTOM_URL',
+                  'CUSTOM_NUMBER',
+                  'CUSTOM_BREAK']
+SPECIAL_TOKENS.extend(['{}BLANK_{}'.format(SPECIAL_PREFIX, i) for i in range(6, 10)])
 
 
 def tokenize(text):
     """ Splits input string into a list of tokens """
     result = RE_PATTERN.findall(text)
     return [t for t in result if t.strip()]
-

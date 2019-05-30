@@ -1,43 +1,39 @@
-
-# -*- coding: utf-8 -*-
-from __future__ import print_function, division, unicode_literals
+"""
+Utils functions to process words from messages
+"""
 import sys
 import re
 import string
 import emoji
 from itertools import groupby
+from tokenizer import RE_MENTION, RE_URL, SPECIAL_TOKENS
 
-import numpy as np
-from torchmoji.tokenizer import RE_MENTION, RE_URL
-from torchmoji.global_variables import SPECIAL_TOKENS
+mention_re = re.compile(RE_MENTION)
+url_re = re.compile(RE_URL)
 
-unichr = chr  # Python 3
+# see https://www.utf8-chartable.de/unicode-utf8-table.pl?start=65024&utf8=string-literal
+# Define different styles of emojis
+VARIATION_SELECTORS = ['\ufe00',
+                       '\ufe01',
+                       '\ufe02',
+                       '\ufe03',
+                       '\ufe04',
+                       '\ufe05',
+                       '\ufe06',
+                       '\ufe07',
+                       '\ufe08',
+                       '\ufe09',
+                       '\ufe0a',
+                       '\ufe0b',
+                       '\ufe0c',
+                       '\ufe0d',
+                       '\ufe0e',
+                       '\ufe0f']
 
-AtMentionRegex = re.compile(RE_MENTION)
-urlRegex = re.compile(RE_URL)
-
-# from http://bit.ly/2rdjgjE (UTF-8 encodings and Unicode chars)
-VARIATION_SELECTORS = [ '\ufe00',
-                        '\ufe01',
-                        '\ufe02',
-                        '\ufe03',
-                        '\ufe04',
-                        '\ufe05',
-                        '\ufe06',
-                        '\ufe07',
-                        '\ufe08',
-                        '\ufe09',
-                        '\ufe0a',
-                        '\ufe0b',
-                        '\ufe0c',
-                        '\ufe0d',
-                        '\ufe0e',
-                        '\ufe0f']
-
-# from https://stackoverflow.com/questions/92438/stripping-non-printable-characters-from-a-string-in-python
 ALL_CHARS = (unichr(i) for i in range(sys.maxunicode))
-CONTROL_CHARS = ''.join(map(unichr, list(range(0,32)) + list(range(127,160))))
+CONTROL_CHARS = ''.join(map(unichr, list(range(0, 32)) + list(range(127, 160))))
 CONTROL_CHAR_REGEX = re.compile('[%s]' % re.escape(CONTROL_CHARS))
+
 
 def is_special_token(word):
     equal = False
@@ -55,9 +51,7 @@ def is_english(words, english, pct_eng_short=0.5, pct_eng_long=0.6, ignore_speci
         return True, 0, 0
 
     for w in words:
-        if len(w) < min_length \
-                or punct_word(w) \
-                or (ignore_special_tokens and is_special_token(w)):
+        if len(w) < min_length or punct_word(w) or (ignore_special_tokens and is_special_token(w)):
             continue
         n_words += 1
         if w in english:
@@ -72,7 +66,7 @@ def is_english(words, english, pct_eng_short=0.5, pct_eng_long=0.6, ignore_speci
     return valid_english, n_words, n_english
 
 
-def correct_length(words, min_words=0, max_words=99999, ignore_special_tokens=True):
+def valid_length(words, min_words=0, max_words=99999, ignore_special_tokens=True):
     """ Ensure text contains enough English words """
 
     n_words = 0
@@ -84,18 +78,13 @@ def correct_length(words, min_words=0, max_words=99999, ignore_special_tokens=Tr
     return valid
 
 
-def punct_word(word, punctuation=string.punctuation):
-    return all([True if c in punctuation else False for c in word])
-
-
-# def load_non_english_user_set():
-#     non_english_user_set = set(np.load('uids.npz')['data'])
-#     return non_english_user_set
+def punct_word(word, punct=string.punctuation):
+    return all([True if c in punct else False for c in word])
 
 
 def non_english_user(userid, non_english_user_set):
-    neu_found = int(userid) in non_english_user_set
-    return neu_found
+    usr = int(userid) in non_english_user_set
+    return usr
 
 
 def separate_emoji_and_text(text):
@@ -130,20 +119,19 @@ def shorten_word(word):
     except (UnicodeDecodeError, UnicodeEncodeError, AttributeError) as e:
         return word
 
-    # must have at least 3 char to be shortened
+    # must have at least 3 chars
     if len(word) < 3:
         return word
 
-    # find groups of 3+ consecutive letters
+    # find groups of more than 2 consecutive letters
     letter_groups = [list(g) for k, g in groupby(word)]
     triple_or_more = [''.join(g) for g in letter_groups if len(g) >= 3]
     if len(triple_or_more) == 0:
         return word
 
-    # replace letters to find the short word
     short_word = word
     for trip in triple_or_more:
-        short_word = short_word.replace(trip, trip[0]*2)
+        short_word = short_word.replace(trip, trip[0] * 2)
 
     return short_word
 
@@ -153,9 +141,9 @@ def detect_special_tokens(word):
         int(word)
         word = SPECIAL_TOKENS[4]
     except ValueError:
-        if AtMentionRegex.findall(word):
+        if mention_re.findall(word):
             word = SPECIAL_TOKENS[2]
-        elif urlRegex.findall(word):
+        elif url_re.findall(word):
             word = SPECIAL_TOKENS[3]
     return word
 
