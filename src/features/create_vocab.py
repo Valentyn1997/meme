@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division
-#to understand the use of future: https://stackoverflow.com/questions/7075082/what-is-future-in-python-used-for-and-how-when-to-use-it-and-how-it-works
+
 
 import glob
 import json
@@ -14,32 +14,31 @@ from torchmoji.word_generator import WordGenerator
 from torchmoji.global_variables import SPECIAL_TOKENS, VOCAB_PATH
 
 class VocabBuilder():
-    """ Create vocabulary with words extracted from sentences as fed from a
-        word generator.
-    """
-    def __init__(self, word_gen):
+    #Create Vocabulary
+    
+    def __init__(self, generated_word):
         # initialize any new key with value of 0
         
-        #defaultdics(): Retruns a deictionary like object
-        #lambda: creates a lambda function that accepts 0 and a list as arguments
-        self.word_counts = defaultdict(lambda: 0, {}) #Idea: to write a function in stead of lambda 
-        self.word_length_limit=30
+        r = lambda: 0
+        self.word_counts = defaultdict(r, {})
+        self.word_length=30
 
         for token in SPECIAL_TOKENS:
-            assert len(token) < self.word_length_limit #asserts that length of the token must be less than the word_length_limit. 
-            #If it is not then it will stop the program and throw an error
             
-            self.word_counts[token] = 0
-        self.word_gen = word_gen
+            if(len(token) < self.word_length): 
+                self.word_counts[token] = 0
+            
+            else:
+                print("An error occurred")
+            
+        self.generated_word = generated_word
 
     def count_words_in_sentence(self, words):
-        """ Generates word counts for all tokens in the given sentence.
-
-        # Arguments:
-            words: Tokenized sentence whose words should be counted.
-        """
+       #generating word count
+        #words: Tokenized sentence whose words should be counted.
+        
         for word in words:
-            if len(word) > 0 and len(word) <= self.word_length_limit:
+            if len(word) > 0 and len(word) <= self.word_length:
                 #try: code inside the try block is executed as a normal part of the program
                 try:   
                     self.word_counts[word] += 1
@@ -48,16 +47,12 @@ class VocabBuilder():
                     self.word_counts[word] = 1
 
     def save_vocab(self, path=None):
-        """ Saves the vocabulary into a file.
-
-        # Arguments:
-            path: Where the vocabulary should be saved. If not specified, a
-                  randomly generated filename is used instead.
-        """
+        #Saves the vocabulary in a file.
         
-        #creating the data type for the np_dict array by defining that it will contain a word  which is a string and a count of that word which is an integer
-        dtype = ([('word','|S{}'.format(self.word_length_limit)),('count','int')])
-        np_dict = np.array(self.word_counts.items(), dtype=dtype)
+        #creating the data type for the np_dict array by defining that it will contain a word
+        
+        datatype = ([('word','|S{}'.format(self.word_length)),('count','int')])
+        np_dict = np.array(self.word_counts.items(), dtype=datatype)
 
         # sort from highest to lowest frequency
         np_dict[::-1].sort(order='count')
@@ -70,42 +65,25 @@ class VocabBuilder():
         print("Saved dict to {}".format(path))
 
     def get_next_word(self):
-        """ Returns next tokenized sentence from the word geneerator.
-
-        # Returns:
-            List of strings, representing the next tokenized sentence.
-        """
-        return self.word_gen.__iter__().next()
+        #Returns next tokenized sentence from the word geneerator.
+        return self.generated_word.__iter__().next()
 
     def count_all_words(self):
-        """ Generates word counts for all words in all sentences of the word
-            generator.
-        """
-        for words, _ in self.word_gen:
+        #counts for all words in all sentences of the word generator.
+       
+        for words, _ in self.generated_word:
             self.count_words_in_sentence(words)
 
 class MasterVocab():
-    """ Combines vocabularies.
-    """
+    #Combines vocabularies.
+    
     def __init__(self):
 
         # initialize custom tokens
-        self.master_vocab = {}
+        self.m_vocab = {}
 
-    def populate_master_vocab(self, vocab_path, min_words=1, force_appearance=None):
-        """ Populates the master vocabulary using all vocabularies found in the
-            given path. Vocabularies should be named *.npz. Expects the
-            vocabularies to be numpy arrays with counts. Normalizes the counts
-            and combines them.
-
-        # Arguments:
-            vocab_path: Path containing vocabularies to be combined.
-            min_words: Minimum amount of occurences a word must have in order
-                to be included in the master vocabulary.
-            force_appearance: Optional vocabulary filename that will be added
-                to the master vocabulary no matter what. This vocabulary must
-                be present in vocab_path.
-        """
+    def populate_master_vocab(self, vocab_path, min_words=1, f_appearance=None):
+        #Populates the master vocabulary using all vocabularies found in the given path
 
         paths = glob.glob(vocab_path + '*.npz')
         sizes = {path: 0 for path in paths}
@@ -132,8 +110,8 @@ class MasterVocab():
         print('Min: {}, {}, {}'.format(sizes, vocab_of_max_size, max_size))
 
         # can force one vocabulary to always be present
-        if force_appearance is not None:
-            force_appearance_path = [p for p in paths if force_appearance in p][0]
+        if f_appearance is not None:
+            force_appearance_path = [p for p in paths if f_appearance in p][0]
             force_appearance_vocab = deepcopy(dicts[force_appearance_path])
             print(force_appearance_path)
         else:
@@ -159,34 +137,31 @@ class MasterVocab():
                     #if force_word_count < 5:
                         #continue
 
-                if word in self.master_vocab:
-                    self.master_vocab[word] += normalized_count
+                if word in self.m_vocab:
+                    self.m_vocab[word] += normalized_count
                 else:
-                    self.master_vocab[word] = normalized_count
+                    self.m_vocab[word] = normalized_count
 
-        print('Size of master_dict {}'.format(len(self.master_vocab)))
+        print('Size of master_dict {}'.format(len(self.m_vocab)))
         print("Hashes for master dict: {}".format(
-            len([w for w in self.master_vocab if '#' in w[0]])))
+            len([w for w in self.m_vocab if '#' in w[0]])))
 
     def save_vocab(self, path_count, path_vocab, word_limit=100000):
-        """ Saves the master vocabulary into a file.
-        """
+        #Saves the master vocabulary into a file
 
-        # reserve space for 10 special tokens
-        words = OrderedDict()
+        words = OrderedDict() 
         for token in SPECIAL_TOKENS:
             # store -1 instead of np.inf, which can overflow
             words[token] = -1
 
         # sort words by frequency
-        desc_order = OrderedDict(sorted(self.master_vocab.items(),
+        desc_order = OrderedDict(sorted(self.m_vocab.items(),
                                  key=lambda kv: kv[1], reverse=True))
         words.update(desc_order)
 
         # use encoding of up to 30 characters (no token conversions)
         # use float to store large numbers (we don't care about precision loss)
-        np_vocab = np.array(words.items(),
-                            dtype=([('word','|S30'),('count','float')]))
+        np_vocab = np.array(words.items(), dtype=([('word','|S30'),('count','float')]))
 
         # output count for debugging
         counts = np_vocab[:word_limit]
@@ -201,14 +176,7 @@ class MasterVocab():
 
 
 def all_words_in_sentences(sentences):
-    """ Extracts all unique words from a given list of sentences.
-
-    # Arguments:
-        sentences: List or word generator of sentences to be processed.
-
-    # Returns:
-        List of all unique words contained in the given sentences.
-    """
+    #Extracts all unique words from a given list of sentences.
     vocab = []
     if isinstance(sentences, WordGenerator):
         sentences = [s for s, _ in sentences]
@@ -222,16 +190,8 @@ def all_words_in_sentences(sentences):
 
 
 def extend_vocab_in_file(vocab, max_tokens=10000, vocab_path=VOCAB_PATH):
-    """ Extends JSON-formatted vocabulary with words from vocab that are not
-        present in the current vocabulary. Adds up to max_tokens words.
-        Overwrites file in vocab_path.
-
-    # Arguments:
-        new_vocab: Vocabulary to be added. MUST have word_counts populated, i.e.
-            must have run count_all_words() previously.
-        max_tokens: Maximum number of words to be added.
-        vocab_path: Path to the vocabulary json which is to be extended.
-    """
+    # Extends JSON-formatted vocabulary with words from vocab 
+    
     try:
         with open(vocab_path, 'r') as f:
             current_vocab = json.load(f)
@@ -247,18 +207,8 @@ def extend_vocab_in_file(vocab, max_tokens=10000, vocab_path=VOCAB_PATH):
 
 
 def extend_vocab(current_vocab, new_vocab, max_tokens=10000):
-    """ Extends current vocabulary with words from vocab that are not
-        present in the current vocabulary. Adds up to max_tokens words.
-
-    # Arguments:
-        current_vocab: Current dictionary of tokens.
-        new_vocab: Vocabulary to be added. MUST have word_counts populated, i.e.
-            must have run count_all_words() previously.
-        max_tokens: Maximum number of words to be added.
-
-    # Returns:
-        How many new tokens have been added.
-    """
+    # Extends current vocabulary with words from vocab 
+    
     if max_tokens < 0:
         max_tokens = 10000
 
