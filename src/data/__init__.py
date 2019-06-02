@@ -1,4 +1,5 @@
 import json
+import torch
 
 import numpy as np
 
@@ -9,13 +10,13 @@ from torchmoji.sentence_tokenizer import SentenceTokenizer
 class DataGenerator:
     """Generates data"""
 
-    def __init__(self, input, batch_size=16, maxlen=30, shuffle=True, vad_scores=None, random_state=42):
+    def __init__(self, input_sentences, vad_scores, batch_size=16, maxlen=30, shuffle=True, random_state=42):
         """Initialization
         :param batch_size: size of batch
         :param shuffle: shuffle all the data after epoch end
         :param vad_scores: list of true VAD values
         """
-        self.input = input
+        self.input_sentences = input_sentences
         self.batch_size = batch_size
         self.shuffle = shuffle
         if random_state is not None:
@@ -32,7 +33,7 @@ class DataGenerator:
 
     def __len__(self) -> int:
         """Denotes the number of batches per epoch"""
-        return int(np.floor(len(self.input) / self.batch_size))
+        return int(np.floor(len(self.input_sentences) / self.batch_size))
 
     def __getitem__(self, index) -> np.array:
         """Generate one batch of data"""
@@ -43,19 +44,16 @@ class DataGenerator:
         indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
 
         # Find list of IDs
-        input = [self.input[k] for k in indexes]
+        X, y = self.input_sentences[indexes], self.vad_scores[indexes]
 
         # Tokenize sentences
-        input, _, _ = self.sent_tokenizer.tokenize_sentences(input)
+        X, _, _ = self.sent_tokenizer.tokenize_sentences(X)
 
-        return input
-
-    def get_vad_scores(self) -> np.array:
-        return self.vad_scores[self.indexes[0:len(self) * self.batch_size]]
+        return torch.from_numpy(X.astype('int64')).long(), torch.from_numpy(y).float()
 
     def on_epoch_end(self):
         """Updates indexes after each epoch"""
-        self.indexes = np.arange(len(self.input))
+        self.indexes = np.arange(len(self.input_sentences))
         if self.shuffle:
             np.random.shuffle(self.indexes)
 
