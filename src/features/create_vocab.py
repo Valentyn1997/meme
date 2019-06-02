@@ -11,7 +11,8 @@ import numpy as np
 from filter_utils import is_special_token
 from word_extractor import WordExtractor
 from tokenizer import SPECIAL_TOKENS
-from global_variables import VOCAB_PATH
+
+VOCAB_PATH = "path"
 
 
 class VocabBuilder:
