@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division
 
-
 import glob
 import json
 import uuid
@@ -9,49 +8,51 @@ from copy import deepcopy
 from collections import defaultdict, OrderedDict
 import numpy as np
 
-from torchmoji.filter_utils import is_special_token
-from torchmoji.word_generator import WordGenerator
-from torchmoji.global_variables import SPECIAL_TOKENS, VOCAB_PATH
+from filter_utils import is_special_token
+from word_extractor import WordExtractor
+from tokenizer import SPECIAL_TOKENS
+from global_variables import VOCAB_PATH
 
-class VocabBuilder():
-    #Create Vocabulary
-    
+
+class VocabBuilder:
+    # Create Vocabulary
+
     def __init__(self, generated_word):
         # initialize any new key with value of 0
-        
+
         r = lambda: 0
         self.word_counts = defaultdict(r, {})
-        self.word_length=30
+        self.word_length = 30
 
         for token in SPECIAL_TOKENS:
-            
-            if(len(token) < self.word_length): 
+
+            if (len(token) < self.word_length):
                 self.word_counts[token] = 0
-            
+
             else:
                 print("An error occurred")
-            
+
         self.generated_word = generated_word
 
     def count_words_in_sentence(self, words):
-       #generating word count
-        #words: Tokenized sentence whose words should be counted.
-        
+        # generating word count
+        # words: Tokenized sentence whose words should be counted.
+
         for word in words:
             if len(word) > 0 and len(word) <= self.word_length:
-                #try: code inside the try block is executed as a normal part of the program
-                try:   
+                # try: code inside the try block is executed as a normal part of the program
+                try:
                     self.word_counts[word] += 1
-                    #except: program's response to any exceptions in the preceding try clause.
+                    # except: program's response to any exceptions in the preceding try clause.
                 except KeyError:
                     self.word_counts[word] = 1
 
     def save_vocab(self, path=None):
-        #Saves the vocabulary in a file.
-        
-        #creating the data type for the np_dict array by defining that it will contain a word
-        
-        datatype = ([('word','|S{}'.format(self.word_length)),('count','int')])
+        # Saves the vocabulary in a file.
+
+        # creating the data type for the np_dict array by defining that it will contain a word
+
+        datatype = ([('word', '|S{}'.format(self.word_length)), ('count', 'int')])
         np_dict = np.array(self.word_counts.items(), dtype=datatype)
 
         # sort from highest to lowest frequency
@@ -65,25 +66,26 @@ class VocabBuilder():
         print("Saved dict to {}".format(path))
 
     def get_next_word(self):
-        #Returns next tokenized sentence from the word geneerator.
+        # Returns next tokenized sentence from the word geneerator.
         return self.generated_word.__iter__().next()
 
     def count_all_words(self):
-        #counts for all words in all sentences of the word generator.
-       
+        # counts for all words in all sentences of the word generator.
+
         for words, _ in self.generated_word:
             self.count_words_in_sentence(words)
 
+
 class MasterVocab():
-    #Combines vocabularies.
-    
+    # Combines vocabularies.
+
     def __init__(self):
 
         # initialize custom tokens
         self.m_vocab = {}
 
     def populate_master_vocab(self, vocab_path, min_words=1, f_appearance=None):
-        #Populates the master vocabulary using all vocabularies found in the given path
+        # Populates the master vocabulary using all vocabularies found in the given path
 
         paths = glob.glob(vocab_path + '*.npz')
         sizes = {path: 0 for path in paths}
@@ -94,7 +96,7 @@ class MasterVocab():
             np_data = np.load(path)['data']
 
             for entry in np_data:
-                word, count = entry #What is this?
+                word, count = entry  # What is this?
                 if count < min_words:
                     continue
                 if is_special_token(word):
@@ -134,8 +136,8 @@ class MasterVocab():
                         force_word_count = force_appearance_vocab[word]
                     except KeyError:
                         continue
-                    #if force_word_count < 5:
-                        #continue
+                    # if force_word_count < 5:
+                    # continue
 
                 if word in self.m_vocab:
                     self.m_vocab[word] += normalized_count
@@ -147,21 +149,21 @@ class MasterVocab():
             len([w for w in self.m_vocab if '#' in w[0]])))
 
     def save_vocab(self, path_count, path_vocab, word_limit=100000):
-        #Saves the master vocabulary into a file
+        # Saves the master vocabulary into a file
 
-        words = OrderedDict() 
+        words = OrderedDict()
         for token in SPECIAL_TOKENS:
             # store -1 instead of np.inf, which can overflow
             words[token] = -1
 
         # sort words by frequency
         desc_order = OrderedDict(sorted(self.m_vocab.items(),
-                                 key=lambda kv: kv[1], reverse=True))
+                                        key=lambda kv: kv[1], reverse=True))
         words.update(desc_order)
 
         # use encoding of up to 30 characters (no token conversions)
         # use float to store large numbers (we don't care about precision loss)
-        np_vocab = np.array(words.items(), dtype=([('word','|S30'),('count','float')]))
+        np_vocab = np.array(words.items(), dtype=([('word', '|S30'), ('count', 'float')]))
 
         # output count for debugging
         counts = np_vocab[:word_limit]
@@ -170,15 +172,15 @@ class MasterVocab():
         # output the index of each word for easy lookup
         final_words = OrderedDict()
         for i, w in enumerate(words.keys()[:word_limit]):
-            final_words.update({w:i})
+            final_words.update({w: i})
         with open(path_vocab, 'w') as f:
             f.write(json.dumps(final_words, indent=4, separators=(',', ': ')))
 
 
 def all_words_in_sentences(sentences):
-    #Extracts all unique words from a given list of sentences.
+    # Extracts all unique words from a given list of sentences.
     vocab = []
-    if isinstance(sentences, WordGenerator):
+    if isinstance(sentences, WordExtractor):
         sentences = [s for s, _ in sentences]
 
     for sentence in sentences:
@@ -191,7 +193,7 @@ def all_words_in_sentences(sentences):
 
 def extend_vocab_in_file(vocab, max_tokens=10000, vocab_path=VOCAB_PATH):
     # Extends JSON-formatted vocabulary with words from vocab 
-    
+
     try:
         with open(vocab_path, 'r') as f:
             current_vocab = json.load(f)
@@ -203,12 +205,12 @@ def extend_vocab_in_file(vocab, max_tokens=10000, vocab_path=VOCAB_PATH):
 
     # Save back to file
     with open(vocab_path, 'w') as f:
-        json.dump(current_vocab, f, sort_keys=True, indent=4, separators=(',',': '))
+        json.dump(current_vocab, f, sort_keys=True, indent=4, separators=(',', ': '))
 
 
 def extend_vocab(current_vocab, new_vocab, max_tokens=10000):
     # Extends current vocabulary with words from vocab 
-    
+
     if max_tokens < 0:
         max_tokens = 10000
 
@@ -216,7 +218,7 @@ def extend_vocab(current_vocab, new_vocab, max_tokens=10000):
 
     # sort words by frequency
     desc_order = OrderedDict(sorted(new_vocab.word_counts.items(),
-                                key=lambda kv: kv[1], reverse=True))
+                                    key=lambda kv: kv[1], reverse=True))
     words.update(desc_order)
 
     base_index = len(current_vocab.keys())

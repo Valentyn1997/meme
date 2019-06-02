@@ -36,9 +36,10 @@ CONTROL_CHAR_REGEX = re.compile('[%s]' % re.escape(CONTROL_CHARS))
 
 
 def is_special_token(word):
-    equal = False
     if word in SPECIAL_TOKENS:
-        return equal
+        return True
+    else:
+        return False
 
 
 def is_english(words, english, pct_eng_short=0.5, pct_eng_long=0.6, ignore_special_tokens=True, min_length=2):
