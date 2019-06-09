@@ -82,7 +82,7 @@ class WordExtractor:
             return True, word
 
         word = unicodedata.normalize("NFKC", word)
-        word = self.convert_unicode_punctuation(word)
+        # word = self.convert_unicode_punctuation(word)
 
         if self.check_ascii(word):
             return True, word

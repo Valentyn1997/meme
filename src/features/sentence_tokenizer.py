@@ -1,10 +1,7 @@
 import json
 import re
 import string
-import numpy as np
 from sklearn.model_selection import train_test_split
-from word_extractor import WordExtractor
-from create_vocab import extend_vocab, VocabBuilder
 
 
 class SentenceTokenizer:
@@ -20,13 +17,20 @@ class SentenceTokenizer:
     def __init__(self):
         self.vocabulary = self.read_json()
 
+    def extend_vocabulary(self, new_word):
+        # Extends current vocabulary with new words
+        base_val = max(self.vocabulary.values())
+        new_val = base_val + 1
+        self.vocabulary[new_word] = new_val
+        return new_val
+
     def tokenize_sentences(self, sentences):
         """Converts a given list of sentences into a array of integers according to vocabulary"""
         arr_tokens = []
         for sentence in sentences:
             # take only words
             sentence = re.sub('[' + string.punctuation + ']', '', sentence).split()
-            tokens = [self.vocabulary[k.lower()] if k.lower() in self.vocabulary.keys() else 'NotFound' for k in sentence]
+            tokens = [self.vocabulary[k.lower()] if k.lower() in self.vocabulary.keys() else self.extend_vocabulary(k.lower()) for k in sentence]
             arr_tokens.append(tokens)
         return arr_tokens
 
@@ -46,20 +50,13 @@ class SentenceTokenizer:
         ind_train, ind_test = train_test_split(indexes, test_size=split[2])
         ind_train, ind_val = train_test_split(ind_train, test_size=split[1])
 
-        train = np.array([data[x] for x in ind_train])
-        test = np.array([data[x] for x in ind_test])
-        val = np.array([data[x] for x in ind_val])
+        train = [data[x] for x in ind_train]
+        test = [data[x] for x in ind_test]
+        val = [data[x] for x in ind_val]
 
-        added = 0
-        if extend_with > 0:
-            words = WordExtractor(train)
-            vb = VocabBuilder(words)
-            vb.count_all_words()
-            self.vocabulary, added = extend_vocab(self.vocabulary, vb)
+        result = [self.tokenize_sentences(s) for s in [train, val, test]]
 
-        result = [self.tokenize_sentences(s)[0] for s in [train, val, test]]
-
-        return result, added
+        return result
 
 
 
