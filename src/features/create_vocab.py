@@ -26,10 +26,8 @@ class VocabBuilder:
         self.word_length = 30
 
         for token in SPECIAL_TOKENS:
-
-            if (len(token) < self.word_length):
+            if len(token) < self.word_length:
                 self.word_counts[token] = 0
-
             else:
                 print("An error occurred")
 
@@ -77,7 +75,7 @@ class VocabBuilder:
             self.count_words_in_sentence(words)
 
 
-class MasterVocab():
+class MasterVocab:
     # Combines vocabularies.
 
     def __init__(self):
@@ -209,7 +207,7 @@ def extend_vocab_in_file(vocab, max_tokens=10000, vocab_path=VOCAB_PATH):
         json.dump(current_vocab, f, sort_keys=True, indent=4, separators=(',', ': '))
 
 
-def extend_vocab(current_vocab, new_vocab, max_tokens=10000):
+def extend_vocab(current_vocab, new_vocab):
     # Extends current vocabulary with words from vocab 
 
     words = OrderedDict()
@@ -222,8 +220,7 @@ def extend_vocab(current_vocab, new_vocab, max_tokens=10000):
     base_index = len(current_vocab.keys())
     added = 0
     for word in words:
-        if added >= max_tokens:
-            break
+        print(words)
         if word not in current_vocab.keys():
             current_vocab[word] = base_index + added
             added += 1

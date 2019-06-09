@@ -40,7 +40,7 @@ class SentenceTokenizer:
             arr_sentences.append(sentence)
         return arr_sentences
 
-    def split_train_val_test(self, data, split=[0.8, 0.1, 0.1], extend_with=0):
+    def split_train_val_test(self, data, split=[0.8, 0.1, 0.1]):
 
         indexes = list(range(len(data)))
         ind_train, ind_test = train_test_split(indexes, test_size=split[2])
@@ -50,16 +50,12 @@ class SentenceTokenizer:
         test = np.array([data[x] for x in ind_test])
         val = np.array([data[x] for x in ind_val])
 
-        added = 0
-        if extend_with > 0:
-            words = WordExtractor(train)
-            vb = VocabBuilder(words)
-            vb.count_all_words()
-            self.vocabulary, added = extend_vocab(self.vocabulary, vb)
+        words = WordExtractor(train)
+        vb = VocabBuilder(words)
+        vb.count_all_words()
+        self.vocabulary, added = extend_vocab(self.vocabulary, vb)
+        print("Added: ", str(added))
 
         result = [self.tokenize_sentences(s)[0] for s in [train, val, test]]
 
         return result, added
-
-
-
