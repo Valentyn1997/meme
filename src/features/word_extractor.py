@@ -6,13 +6,12 @@ generation and for tokenized datasets.
 import re
 import unicodedata
 import numpy as np
-from text_unidecode import unidecode
+# from text_unidecode import unidecode
 
 from tokenizer import RE_MENTION, tokenize
 from filter_utils import (convert_linebreaks,
                           valid_length,
                           extract_emojis,
-                          mostly_english,
                           non_english_user,
                           process_word,
                           punct_word,
@@ -63,19 +62,19 @@ class WordExtractor:
         except (UnicodeDecodeError, AttributeError):
             return False
 
-    def convert_unicode_punctuation(self, word):
-        word_converted_punct_marks = []
-        for c in word:
-            decoded_c = unidecode(c).lower()
-            if len(decoded_c) == 0:
-                word_converted_punct_marks.append(c)
-            else:
-                allowed_punct = punct_word(decoded_c, punct=VALID_PUNCTUATION)
-                if allowed_punct:
-                    word_converted_punct_marks.append(decoded_c)
-                else:
-                    word_converted_punct_marks.append(c)
-        return ''.join(word_converted_punct_marks)
+    # def convert_unicode_punctuation(self, word):
+    #     word_converted_punct_marks = []
+    #     for c in word:
+    #         decoded_c = unidecode(c).lower()
+    #         if len(decoded_c) == 0:
+    #             word_converted_punct_marks.append(c)
+    #         else:
+    #             allowed_punct = punct_word(decoded_c, punct=VALID_PUNCTUATION)
+    #             if allowed_punct:
+    #                 word_converted_punct_marks.append(decoded_c)
+    #             else:
+    #                 word_converted_punct_marks.append(c)
+    #     return ''.join(word_converted_punct_marks)
 
     def convert_unicode_word(self, word):
         """ Converts Unicode words to ASCII """
@@ -167,8 +166,7 @@ class MsgWordExtractor(WordExtractor):
 
     def data_postprocess_filtering(self, words):
         valid_length = valid_length(words, 1, None)
-        valid_english, n_words, n_english = mostly_english(words, self.english_words)
-        if valid_length and valid_english:
+        if valid_length:
             return True, words
         else:
             return False, []

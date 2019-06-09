@@ -212,9 +212,6 @@ def extend_vocab_in_file(vocab, max_tokens=10000, vocab_path=VOCAB_PATH):
 def extend_vocab(current_vocab, new_vocab, max_tokens=10000):
     # Extends current vocabulary with words from vocab 
 
-    if max_tokens < 0:
-        max_tokens = 10000
-
     words = OrderedDict()
 
     # sort words by frequency
@@ -231,4 +228,4 @@ def extend_vocab(current_vocab, new_vocab, max_tokens=10000):
             current_vocab[word] = base_index + added
             added += 1
 
-    return added
+    return current_vocab, added
