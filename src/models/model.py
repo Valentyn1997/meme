@@ -58,16 +58,16 @@ class RegressionTorchMoji(TorchMoji):
 def train():
 
     # Initialization
-    num_epochs = 2
-    model = RegressionTorchMoji(PRETRAINED_PATH)
+    num_epochs = 100
+    model = RegressionTorchMoji(PRETRAINED_PATH, final_dropout_rate=0.5)
     inner_loss = nn.MSELoss()
 
     data = pd.read_csv(TRAIN_DATASET_PATH)
     X, y = np.array(data.text), np.array(data[['V', 'A']])
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-    train_generator = DataGenerator(X_train, y_train, batch_size=32)
-    test_generator = DataGenerator(X_test, y_test, batch_size=32)
+    train_generator = DataGenerator(X_train, y_train, batch_size=64)
+    test_generator = DataGenerator(X_test, y_test, batch_size=64)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
