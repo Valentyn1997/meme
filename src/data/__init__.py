@@ -28,9 +28,8 @@ class DataGenerator:
         self.maxlen = maxlen
 
         # Tokenizator
-        with open(VOCAB_PATH, 'r') as f:
-            vocabulary = json.load(f)
-        self.sent_tokenizer = SentenceTokenizer(vocabulary)
+        self.sent_tokenizer = SentenceTokenizer()
+        self.vocab_size = len(self.sent_tokenizer.vocabulary)
 
     def __len__(self) -> int:
         """Denotes the number of batches per epoch"""
