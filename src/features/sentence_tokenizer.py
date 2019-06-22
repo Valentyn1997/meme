@@ -14,8 +14,11 @@ class SentenceTokenizer:
         f.close()
         return vocabulary
 
-    def __init__(self):
-        self.vocabulary = self.read_json()
+    def __init__(self, vocabulary=None):
+        if vocabulary is None:
+            self.vocabulary = self.read_json()
+        else:
+            self.vocabulary = vocabulary
 
     def extend_vocabulary(self, new_word):
         # Extends current vocabulary with new words

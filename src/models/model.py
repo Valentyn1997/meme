@@ -58,7 +58,7 @@ class RegressionTorchMoji(TorchMoji):
 def train():
 
     # Initialization
-    num_epochs = 100
+    num_epochs = 3
     model = RegressionTorchMoji(PRETRAINED_PATH, final_dropout_rate=0.5)
     inner_loss = nn.MSELoss()
 

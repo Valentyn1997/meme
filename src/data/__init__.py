@@ -3,8 +3,8 @@ import torch
 
 import numpy as np
 
-from torchmoji.global_variables import VOCAB_PATH
-from torchmoji.sentence_tokenizer import SentenceTokenizer
+from global_variables import VOCAB_PATH
+from src.features.sentence_tokenizer import SentenceTokenizer
 
 
 class DataGenerator:
@@ -29,7 +29,7 @@ class DataGenerator:
         # Tokenizator
         with open(VOCAB_PATH, 'r') as f:
             vocabulary = json.load(f)
-        self.sent_tokenizer = SentenceTokenizer(vocabulary, self.maxlen)
+        self.sent_tokenizer = SentenceTokenizer(vocabulary)
 
     def __len__(self) -> int:
         """Denotes the number of batches per epoch"""
