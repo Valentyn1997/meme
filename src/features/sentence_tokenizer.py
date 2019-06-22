@@ -2,6 +2,10 @@ import json
 import re
 import string
 from sklearn.model_selection import train_test_split
+import numpy as np
+import nltk
+# run in cmd python -c "import nltk; nltk.download('wordnet')"
+from nltk.stem import WordNetLemmatizer
 
 
 class SentenceTokenizer:
@@ -9,33 +13,62 @@ class SentenceTokenizer:
 
     def read_json(self):
         """read vocabulary from json file"""
-        f = open("vocabulary.json")
+        f = open("../vocabulary.json")
         vocabulary = json.load(f)
         f.close()
         return vocabulary
 
     def __init__(self, vocabulary=None):
         if vocabulary is None:
-            self.vocabulary = self.read_json()
+            self.vocabulary = self.lemmatize_vocab(self.read_json())
         else:
-            self.vocabulary = vocabulary
+            self.vocabulary = self.lemmatize_vocab(vocabulary)
+
+    def lemmatize_vocab(self, vocabulary):
+        # exchange keys and values
+        vocabulary = dict((v, k) for k, v in vocabulary.items())
+        # now words are values
+        lemmatizer = WordNetLemmatizer()
+        lemmatized_values = [lemmatizer.lemmatize(w) for w in vocabulary.values()]
+        tokens = list(range(0, len(lemmatized_values)))
+        return dict(zip(lemmatized_values, tokens))
 
     def extend_vocabulary(self, new_word):
         # Extends current vocabulary with new words
+        lemmatizer = WordNetLemmatizer()
         base_val = max(self.vocabulary.values())
         new_val = base_val + 1
-        self.vocabulary[new_word] = new_val
+        self.vocabulary[lemmatizer.lemmatize(new_word)] = new_val
         return new_val
 
-    def tokenize_sentences(self, sentences):
+    def save_vocabulary(self, vocabulary):
+
+        with open('../vocabulary.json', 'w') as outfile:
+            json.dump(vocabulary, outfile)
+        outfile.close()
+
+    def tokenize_sentences(self, sentences, maxlen=30):
         """Converts a given list of sentences into a array of integers according to vocabulary"""
+        sentences = ['I love mom\'s cooking',
+                          'I love how you never reply back..',
+                          'I love cruising with my homies',
+                          'I love messing with yo mind!!',
+                          'I love you and now you\'re just gone..',
+                          'This is shit',
+                          'This is the shit']
+        tokens_matr = np.zeros((len(sentences), maxlen), dtype='uint16')
         arr_tokens = []
+        i = 0
         for sentence in sentences:
             # take only words
             sentence = re.sub('[' + string.punctuation + ']', '', sentence).split()
             tokens = [self.vocabulary[k.lower()] if k.lower() in self.vocabulary.keys() else self.extend_vocabulary(k.lower()) for k in sentence]
-            arr_tokens.append(tokens)
-        return arr_tokens
+            for j in range(len(tokens)):
+                if j<maxlen:
+                    tokens_matr[i, j] = tokens[j]
+            i += 1
+        self.save_vocabulary(self.vocabulary)
+        return tokens_matr
 
     def to_sentence(self, arr_tokens):
         """Converts a given list of tokens into a array of words according to vocabulary"""
