@@ -1,7 +1,7 @@
 import pandas as pd
-from sentence_tokenizer import SentenceTokenizer
+from src.features.sentence_tokenizer import SentenceTokenizer
 import json
-from src import TRAIN_DATASET_PATH
+from src import TRAIN_DATASET_PATH, VOCAB_PATH
 
 if __name__== "__main__" :
     data = pd.read_csv(TRAIN_DATASET_PATH)

@@ -60,7 +60,7 @@ class SentenceTokenizer:
 
     def save_vocabulary(self, vocabulary):
 
-        with open(VOCAB_PATH) as outfile:
+        with open(VOCAB_PATH, 'w') as outfile:
             json.dump(vocabulary, outfile)
         outfile.close()
 
