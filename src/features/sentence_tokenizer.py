@@ -4,17 +4,17 @@ import string
 from sklearn.model_selection import train_test_split
 import numpy as np
 import nltk
-# run in cmd python -c "import nltk;
 nltk.download('wordnet')
 from nltk.stem import WordNetLemmatizer
 import re
+from src import VOCAB_PATH
 
 class SentenceTokenizer:
     # Create array of integers (tokens) corresponding to input sentences.
 
     def read_json(self):
         """read vocabulary from json file"""
-        f = open("../vocabulary.json")
+        f = open(VOCAB_PATH)
         vocabulary = json.load(f)
         f.close()
         return vocabulary
@@ -60,7 +60,7 @@ class SentenceTokenizer:
 
     def save_vocabulary(self, vocabulary):
 
-        with open('../vocabulary.json', 'w') as outfile:
+        with open(VOCAB_PATH) as outfile:
             json.dump(vocabulary, outfile)
         outfile.close()
 

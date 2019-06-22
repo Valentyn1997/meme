@@ -1,9 +1,10 @@
 import pandas as pd
 from sentence_tokenizer import SentenceTokenizer
 import json
+from src import TRAIN_DATASET_PATH
 
 if __name__== "__main__" :
-    data = pd.read_csv(r'appendix1_test.csv')
+    data = pd.read_csv(TRAIN_DATASET_PATH)
     sentences = data.text
     print('sentences:')
     print(sentences[0:100])
@@ -16,5 +17,5 @@ if __name__== "__main__" :
     sentences = st.to_sentence(tokens)
     print('sentences:')
     print(sentences[0:100])
-    with open('vocabulary.json', 'w') as outfile:
+    with open(VOCAB_PATH, 'w') as outfile:
         json.dump(st.vocabulary, outfile)
