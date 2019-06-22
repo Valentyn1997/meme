@@ -4,9 +4,10 @@ import string
 from sklearn.model_selection import train_test_split
 import numpy as np
 import nltk
-# run in cmd python -c "import nltk; nltk.download('wordnet')"
+# run in cmd python -c "import nltk;
+nltk.download('wordnet')
 from nltk.stem import WordNetLemmatizer
-
+import re
 
 class SentenceTokenizer:
     # Create array of integers (tokens) corresponding to input sentences.
@@ -23,6 +24,22 @@ class SentenceTokenizer:
             self.vocabulary = self.lemmatize_vocab(self.read_json())
         else:
             self.vocabulary = self.lemmatize_vocab(vocabulary)
+
+    def decontracted(phrase):
+        # specific
+        phrase = re.sub(r"won't", "will not", phrase)
+        phrase = re.sub(r"can\'t", "can not", phrase)
+
+        # general
+        phrase = re.sub(r"n\'t", " not", phrase)
+        phrase = re.sub(r"\'re", " are", phrase)
+        phrase = re.sub(r"\'s", " is", phrase)
+        phrase = re.sub(r"\'d", " would", phrase)
+        phrase = re.sub(r"\'ll", " will", phrase)
+        phrase = re.sub(r"\'t", " not", phrase)
+        phrase = re.sub(r"\'ve", " have", phrase)
+        phrase = re.sub(r"\'m", " am", phrase)
+        return phrase
 
     def lemmatize_vocab(self, vocabulary):
         # exchange keys and values
@@ -60,6 +77,7 @@ class SentenceTokenizer:
         arr_tokens = []
         i = 0
         for sentence in sentences:
+            #sentence = self.decontracted(sentence)
             # take only words
             sentence = re.sub('[' + string.punctuation + ']', '', sentence).split()
             tokens = [self.vocabulary[k.lower()] if k.lower() in self.vocabulary.keys() else self.extend_vocabulary(k.lower()) for k in sentence]
