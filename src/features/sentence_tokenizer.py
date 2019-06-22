@@ -29,6 +29,8 @@ class SentenceTokenizer:
         # specific
         phrase = re.sub(r"won't", "will not", phrase)
         phrase = re.sub(r"can\'t", "can not", phrase)
+        phrase = re.sub(r"could\'t", "could not", phrase)
+        phrase = re.sub(r"would\'t", "would not", phrase)
 
         # general
         phrase = re.sub(r"n\'t", " not", phrase)
@@ -77,7 +79,7 @@ class SentenceTokenizer:
         arr_tokens = []
         i = 0
         for sentence in sentences:
-            #sentence = self.decontracted(sentence)
+            sentence = self.decontracted(sentence)
             # take only words
             sentence = re.sub('[' + string.punctuation + ']', '', sentence).split()
             tokens = [self.vocabulary[k.lower()] if k.lower() in self.vocabulary.keys() else self.extend_vocabulary(k.lower()) for k in sentence]
