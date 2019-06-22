@@ -1,40 +1,117 @@
 import torch
+from torch.autograd import Variable
+from torchmoji.model_def import TorchMoji, load_specific_weights
+import numpy as np
+from sklearn.model_selection import train_test_split
+
 import torch.nn as nn
+from torchmoji.global_variables import NB_TOKENS, PRETRAINED_PATH
+from src.data import DataGenerator
+from src import TRAIN_DATASET_PATH, VA_REGRESSION_WEIGHTS_PATH
+
+from tqdm import tqdm
+import pandas as pd
 
 
-class EmojiModel(nn.Module):
+class RegressionTorchMoji(TorchMoji):
 
-    def __init__(self, nb_classes, nb_tokens, feature_output=False, output_logits=False,
-                 embed_dropout_rate=0, final_dropout_rate=0, return_attention=False):
-
-        super(EmojiModel, self).__init__()
-
+    def __init__(self, weight_path, final_dropout_rate=0):
+        super(RegressionTorchMoji, self).__init__(nb_classes=None, nb_tokens=NB_TOKENS,
+                                                  return_attention=True, feature_output=True)
         embedding_dim = 256
         hidden_size = 512
-        attention_size = 4 * hidden_size + embedding_dim
 
-        self.feature_output = feature_output
-        self.embed_dropout_rate = embed_dropout_rate
-        self.final_dropout_rate = final_dropout_rate
-        self.return_attention = return_attention
-        self.hidden_size = hidden_size
-        self.output_logits = output_logits
-        self.nb_classes = nb_classes
-
-        self.add_module('embed', nn.Embedding(nb_tokens, embedding_dim))
-        self.add_module('embed_dropout', nn.Dropout2d(embed_dropout_rate))
+        # Replacing LSTM layers
         self.add_module('lstm_0', nn.LSTM(embedding_dim, hidden_size, batch_first=True, bidirectional=True))
-        self.add_module('lstm_1', nn.LSTM(hidden_size*2, hidden_size, batch_first=True, bidirectional=True))
-        #self.add_module('lstm_0', LSTMHardSigmoid(embedding_dim, hidden_size, batch_first=True, bidirectional=True))
-        #self.add_module('lstm_1', LSTMHardSigmoid(hidden_size*2, hidden_size, batch_first=True, bidirectional=True))
-        #self.add_module('attention_layer', Attention(attention_size=attention_size, return_attention=return_attention))
-        if not feature_output:
-            self.add_module('final_dropout', nn.Dropout(final_dropout_rate))
-            if output_logits:
-                self.add_module('output_layer', nn.Sequential(nn.Linear(attention_size, nb_classes if self.nb_classes > 2 else 1)))
-            else:
-                self.add_module('output_layer', nn.Sequential(nn.Linear(attention_size, nb_classes if self.nb_classes > 2 else 1),
-                                                              nn.Softmax() if self.nb_classes > 2 else nn.Sigmoid()))
-        self.init_weights()
+        self.add_module('lstm_1', nn.LSTM(hidden_size * 2, hidden_size, batch_first=True, bidirectional=True))
 
-        self.eval()
+        # Adding linear regression layer
+        self.add_module('final_dropout', nn.Dropout(final_dropout_rate))
+        self.add_module('output_layer', nn.Sequential(nn.Linear(self.attention_layer.attention_size, 2)))
+        self.add_module('sigmoid', nn.Sigmoid())
+        load_specific_weights(self, weight_path, exclude_names=['output_layer'], extend_embedding=0)
+
+    def forward(self, input_seqs):
+        return_numpy = False
+        return_tensor = False
+        if isinstance(input_seqs, (torch.LongTensor, torch.cuda.LongTensor)):
+            input_seqs = Variable(input_seqs)
+            return_tensor = True
+        elif not isinstance(input_seqs, Variable):
+            input_seqs = Variable(torch.from_numpy(input_seqs.astype('int64')).long())
+            return_numpy = True
+
+        # Calling torchmoji
+        x, att_weights = super().forward(input_seqs)  # ATTENTION, x is tensor, so gradient doesn't propagate back !!!
+
+        x = self.final_dropout(x)
+        x = self.output_layer(x)
+        outputs = self.sigmoid(x)
+
+        # Adapt return format if needed
+        if return_numpy:
+            outputs = outputs.data.numpy()
+
+        return outputs
+
+
+def train():
+
+    # Initialization
+    num_epochs = 100
+    model = RegressionTorchMoji(PRETRAINED_PATH, final_dropout_rate=0.5)
+    inner_loss = nn.MSELoss()
+
+    data = pd.read_csv(TRAIN_DATASET_PATH)
+    X, y = np.array(data.text), np.array(data[['V', 'A']])
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    train_generator = DataGenerator(X_train, y_train, batch_size=64)
+    test_generator = DataGenerator(X_test, y_test, batch_size=64)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+
+    # Training
+
+    for epoch in range(num_epochs):
+
+        print('===========Epoch [{}/{}]============'.format(epoch + 1, num_epochs))
+
+        for batch in tqdm(range(len(train_generator)), desc='Training'):
+            X, y_true = train_generator[batch]
+
+            input = Variable(X, requires_grad=False)
+            true_output = Variable(y_true, requires_grad=False)
+            model.train()  # Switching to a train mode
+
+            # forward pass
+            optimizer.zero_grad()
+            output = model(input)
+            loss = inner_loss(true_output, output)
+
+            # backward
+            loss.backward()
+            optimizer.step()
+
+        # log
+        print(f'Loss on last train batch: {loss.data}')
+
+        # Validation
+        model.eval()
+        test_loss = np.empty(len(test_generator))
+        for batch in range(len(test_generator)):
+
+            input = Variable(test_generator[batch][0], requires_grad=False)
+            true_output = Variable(test_generator[batch][1], requires_grad=False)
+
+            # forward pass
+            output = model(input)
+            test_loss[batch] = inner_loss(true_output, output).data
+
+        print(f'Loss on test: {test_loss.mean()}')
+
+    torch.save(model, VA_REGRESSION_WEIGHTS_PATH)
+
+
+if __name__ == '__main__':
+    train()

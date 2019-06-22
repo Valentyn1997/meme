@@ -1,3 +1,4 @@
+tqdm
 aiohttp==3.5.4
 alabaster==0.7.12
 asn1crypto==0.24.0
