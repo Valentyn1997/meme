@@ -7,6 +7,7 @@ from telegram import InlineQueryResultCachedSticker
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters
 from telegram import ReplyKeyboardMarkup
 from src.telegram_bot.messages import MessagesLoader, MessageSaver, Chat
+from src.features.audio_supporter import AudioConverter
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -43,6 +44,10 @@ class TelegramBot:
         # Text messages handler
         self.dp.add_handler(MessageHandler(Filters.text, self._handle_message, pass_user_data=True, pass_chat_data=True))
         logger.info('Text messages handler added.')
+
+        # Text messages handler
+        self.dp.add_handler(MessageHandler(Filters.audio, self._handle_audio, pass_user_data=True, pass_chat_data=True))
+        logger.info('Audio messages handler added.')
 
         # Sticker messages handler
         # self.dp.add_handler(
@@ -124,6 +129,20 @@ class TelegramBot:
         # self.updater.bot.send_message(chat_id=MEME_CHAT_ID, text='choose:', reply_markup=markup)
         # update.message.edit_text(, )
 
+
+    def _handle_audio(self, update, context):
+
+        #Adding new chat
+        if update.message.chat_id not in self.active_chats.keys():
+            current_chat = Chat(chat_id=update.message.chat_id, loader=self.loader)
+            self.active_chats[current_chat.chat_id] = current_chat
+            logger.info(f'Chat {current_chat.chat_id} activated.')
+        else:
+            current_chat = self.active_chats[update.message.chat_id]
+
+        text_msg = AudioConverter.audio_to_text(update.message)
+        current_chat.add_message(text_msg)
+        self.saver.save_one(text_msg)
 
     def _inlinequery(self, update, context):
         """Handle the inline query."""
