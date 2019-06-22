@@ -3,7 +3,7 @@ import torch
 
 import numpy as np
 
-from global_variables import VOCAB_PATH
+from src import VOCAB_PATH
 from src.features.sentence_tokenizer import SentenceTokenizer
 
 
