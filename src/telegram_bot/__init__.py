@@ -1,6 +1,10 @@
 import logging
 from uuid import uuid4
 import numpy as np
+import urllib
+import requests
+import subprocess
+import soundfile as sf
 
 from pymongo import MongoClient
 from telegram import InlineQueryResultCachedSticker
@@ -16,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 MEME_CHAT_ID = -312547156
 BASIC_STICKER_SET = 'BigFaceEmoji'
+
 
 class TelegramBot:
 
@@ -33,10 +38,10 @@ class TelegramBot:
         self.saver = MessageSaver(self.db_messages_collection)
         logger.info('Remote MongoDB cluster connected.')
 
-        #Initing active chats
+        # Initing active chats
         self.active_chats = {}
 
-        #Command handlers
+        # Command handlers
         self.dp.add_handler(CommandHandler("start", self._start))
         self.dp.add_handler(CommandHandler("help", self._help))
         logger.info('Command handlers added.')
@@ -46,7 +51,7 @@ class TelegramBot:
         logger.info('Text messages handler added.')
 
         # Text messages handler
-        self.dp.add_handler(MessageHandler(Filters.audio, self._handle_audio, pass_user_data=True, pass_chat_data=True))
+        self.dp.add_handler(MessageHandler(Filters.voice, self._handle_audio, pass_user_data=True, pass_chat_data=True))
         logger.info('Audio messages handler added.')
 
         # Sticker messages handler
@@ -54,7 +59,7 @@ class TelegramBot:
         #     MessageHandler(Filters.sticker, self._handle_message, pass_user_data=True, pass_chat_data=True))
         # logger.info('Sticker messages handler added.')
 
-        #Images messages handler
+        # Images messages handler
         self.dp.add_handler(MessageHandler(Filters.photo, self._handle_message, pass_user_data=True, pass_chat_data=True))
         logger.info('Photo messages handler added.')
 
@@ -67,12 +72,11 @@ class TelegramBot:
         self.dp.add_error_handler(self._error)
         logger.info('Errors handler added.')
 
-        #Stickers / emojis to answer
+        # Stickers / emojis to answer
         self.stiker_set = self.updater.bot.get_sticker_set(BASIC_STICKER_SET).stickers
 
         # ML Model
         self.model = model
-
 
     def start_bot(self):
         # Start the Bot
@@ -107,11 +111,11 @@ class TelegramBot:
         defaultEmoji = u'\U0001F300'
 
         return np.random.permutation([thunderstorm, drizzle, rain, snowflake, snowman, atmosphere, clearSky,
-                                            fewClouds, clouds, hot, defaultEmoji])
+                                      fewClouds, clouds, hot, defaultEmoji])
 
     def _handle_message(self, update, context):
 
-        #Adding new chat
+        # Adding new chat
         if update.message.chat_id not in self.active_chats.keys():
             current_chat = Chat(chat_id=update.message.chat_id, loader=self.loader)
             self.active_chats[current_chat.chat_id] = current_chat
@@ -129,10 +133,9 @@ class TelegramBot:
         # self.updater.bot.send_message(chat_id=MEME_CHAT_ID, text='choose:', reply_markup=markup)
         # update.message.edit_text(, )
 
-
     def _handle_audio(self, update, context):
 
-        #Adding new chat
+        # Adding new chat
         if update.message.chat_id not in self.active_chats.keys():
             current_chat = Chat(chat_id=update.message.chat_id, loader=self.loader)
             self.active_chats[current_chat.chat_id] = current_chat
@@ -140,9 +143,28 @@ class TelegramBot:
         else:
             current_chat = self.active_chats[update.message.chat_id]
 
-        text_msg = AudioConverter.audio_to_text(update.message)
-        current_chat.add_message(text_msg)
-        self.saver.save_one(text_msg)
+        file_id = update.message.voice.file_id
+        file = self.updater.bot.get_file(file_id)
+
+        # get and save file
+        url = file.file_path
+        res = requests.get(url)
+
+        src_filename = 'test.oga'
+        dest_filename = 'test.wav'
+        open(src_filename, 'wb').write(res.content)
+
+        # to test how it works
+        # TODO rewrite and finish this
+
+        data, samplerate = sf.read(src_filename)
+        sf.write(dest_filename, data, samplerate)
+
+        text_msg = AudioConverter.audio_to_text(src_filename)
+
+        update.message.text = text_msg
+        current_chat.add_message(update.message)
+        self.saver.save_one(update.message)
 
     def _inlinequery(self, update, context):
         """Handle the inline query."""
