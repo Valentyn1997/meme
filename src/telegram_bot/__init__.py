@@ -5,8 +5,8 @@ import numpy as np
 from pymongo import MongoClient
 from telegram import InlineQueryResultCachedSticker
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters
-from telegram import ReplyKeyboardMarkup
 from src.telegram_bot.messages import MessagesLoader, MessageSaver, Chat
+from src.features.audio_supporter import AudioConverter
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 MEME_CHAT_ID = -391131828
 BASIC_STICKER_SET = 'BigFaceEmoji'
+
 
 class TelegramBot:
 
@@ -32,10 +33,10 @@ class TelegramBot:
         self.saver = MessageSaver(self.db_messages_collection)
         logger.info('Remote MongoDB cluster connected.')
 
-        #Initing active chats
+        # Initing active chats
         self.active_chats = {}
 
-        #Command handlers
+        # Command handlers
         self.dp.add_handler(CommandHandler("start", self._start))
         self.dp.add_handler(CommandHandler("help", self._help))
         logger.info('Command handlers added.')
@@ -44,12 +45,16 @@ class TelegramBot:
         self.dp.add_handler(MessageHandler(Filters.text, self._handle_message, pass_user_data=True, pass_chat_data=True))
         logger.info('Text messages handler added.')
 
+        # Text messages handler
+        self.dp.add_handler(MessageHandler(Filters.voice, self._handle_audio, pass_user_data=True, pass_chat_data=True))
+        logger.info('Audio messages handler added.')
+
         # Sticker messages handler
         # self.dp.add_handler(
         #     MessageHandler(Filters.sticker, self._handle_message, pass_user_data=True, pass_chat_data=True))
         # logger.info('Sticker messages handler added.')
 
-        #Images messages handler
+        # Images messages handler
         self.dp.add_handler(MessageHandler(Filters.photo, self._handle_message, pass_user_data=True, pass_chat_data=True))
         logger.info('Photo messages handler added.')
 
@@ -62,12 +67,11 @@ class TelegramBot:
         self.dp.add_error_handler(self._error)
         logger.info('Errors handler added.')
 
-        #Stickers / emojis to answer
+        # Stickers / emojis to answer
         self.stiker_set = self.updater.bot.get_sticker_set(BASIC_STICKER_SET).stickers
 
         # ML Model
         self.model = model
-
 
     def start_bot(self):
         # Start the Bot
@@ -89,7 +93,7 @@ class TelegramBot:
 
     def _handle_message(self, update, context):
 
-        #Adding new chat
+        # Adding new chat
         if update.message.chat_id not in self.active_chats.keys():
             current_chat = Chat(chat_id=update.message.chat_id, loader=self.loader)
             self.active_chats[current_chat.chat_id] = current_chat
@@ -108,6 +112,29 @@ class TelegramBot:
         # self.updater.bot.send_message(chat_id=MEME_CHAT_ID, text='choose:', reply_markup=markup)
         # update.message.edit_text(, )
 
+    def _handle_audio(self, update, context):
+
+        # Adding new chat
+        if update.message.chat_id not in self.active_chats.keys():
+            current_chat = Chat(chat_id=update.message.chat_id, loader=self.loader)
+            self.active_chats[current_chat.chat_id] = current_chat
+            logger.info(f'Chat {current_chat.chat_id} activated.')
+        else:
+            current_chat = self.active_chats[update.message.chat_id]
+
+        file_id = update.message.voice.file_id
+        file = self.updater.bot.get_file(file_id)
+
+        tmp_inp = 'voice.ogg'
+        tmp_out = 'voice.flac'
+        file.download(tmp_inp)
+
+        AudioConverter.convert_format(tmp_inp, tmp_out)
+        text_msg = AudioConverter.audio_to_text(tmp_out)
+
+        update.message.text = text_msg
+        current_chat.add_message(update.message)
+        self.saver.save_one(update.message)
 
     def _inlinequery(self, update, context):
         """Handle the inline query."""
