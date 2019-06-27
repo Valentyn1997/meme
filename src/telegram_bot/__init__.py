@@ -1,15 +1,10 @@
 import logging
 from uuid import uuid4
 import numpy as np
-import urllib
-import requests
-import subprocess
-import soundfile as sf
 
 from pymongo import MongoClient
 from telegram import InlineQueryResultCachedSticker
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters
-from telegram import ReplyKeyboardMarkup
 from src.telegram_bot.messages import MessagesLoader, MessageSaver, Chat
 from src.features.audio_supporter import AudioConverter
 
@@ -145,22 +140,12 @@ class TelegramBot:
 
         file_id = update.message.voice.file_id
         file = self.updater.bot.get_file(file_id)
+        tmp_inp = 'voice.ogg'
+        tmp_out = 'voice.flac'
+        file.download(tmp_inp)
 
-        # get and save file
-        url = file.file_path
-        res = requests.get(url)
-
-        src_filename = 'test.oga'
-        dest_filename = 'test.wav'
-        open(src_filename, 'wb').write(res.content)
-
-        # to test how it works
-        # TODO rewrite and finish this
-
-        data, samplerate = sf.read(src_filename)
-        sf.write(dest_filename, data, samplerate)
-
-        text_msg = AudioConverter.audio_to_text(src_filename)
+        AudioConverter.convert_format(tmp_inp, tmp_out)
+        text_msg = AudioConverter.audio_to_text(tmp_out)
 
         update.message.text = text_msg
         current_chat.add_message(update.message)
