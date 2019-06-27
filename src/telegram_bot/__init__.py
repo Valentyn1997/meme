@@ -140,6 +140,7 @@ class TelegramBot:
 
         file_id = update.message.voice.file_id
         file = self.updater.bot.get_file(file_id)
+
         tmp_inp = 'voice.ogg'
         tmp_out = 'voice.flac'
         file.download(tmp_inp)
