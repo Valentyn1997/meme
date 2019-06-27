@@ -15,8 +15,8 @@ import pandas as pd
 
 class RegressionTorchMoji(TorchMoji):
 
-    def __init__(self, weight_path, final_dropout_rate=0):
-        super(RegressionTorchMoji, self).__init__(nb_classes=None, nb_tokens=NB_TOKENS,
+    def __init__(self, weight_path, nb_tokens, final_dropout_rate=0):
+        super(RegressionTorchMoji, self).__init__(nb_classes=None, nb_tokens=nb_tokens,
                                                   return_attention=True, feature_output=True)
         embedding_dim = 256
         hidden_size = 512
@@ -57,17 +57,19 @@ class RegressionTorchMoji(TorchMoji):
 
 def train():
 
-    # Initialization
-    num_epochs = 100
-    model = RegressionTorchMoji(PRETRAINED_PATH, final_dropout_rate=0.5)
-    inner_loss = nn.MSELoss()
-
+    # Data
     data = pd.read_csv(TRAIN_DATASET_PATH)
     X, y = np.array(data.text), np.array(data[['V', 'A']])
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     train_generator = DataGenerator(X_train, y_train, batch_size=64)
     test_generator = DataGenerator(X_test, y_test, batch_size=64)
+
+    # Initialization
+    num_epochs = 3
+    model = RegressionTorchMoji(PRETRAINED_PATH, nb_tokens=train_generator.vocab_size, final_dropout_rate=0.5)
+    inner_loss = nn.MSELoss()
+
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
