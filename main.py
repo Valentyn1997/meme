@@ -5,9 +5,10 @@ from src.telegram_bot import *
 from src.models import *
 
 def main():
-    model = LogRegression(path_to_model=r'models\logistic_regression\log_regression_0.81.model',
-                          path_to_vectorizer=r'models\logistic_regression\vectorizer.vec',
-                          path_to_encoder=r'models\logistic_regression\emotion_encoder.enc')
+    # model = LogRegression(path_to_model=r'models\logistic_regression\log_regression_0.81.model',
+    #                       path_to_vectorizer=r'models\logistic_regression\vectorizer.vec',
+    #                       path_to_encoder=r'models\logistic_regression\emotion_encoder.enc')
+    model = TorchMoji()
     bot = TelegramBot(token=TOKEN, mongo_adress=MONGO_ADDRESS, model=model)
     bot.start_bot()
 
