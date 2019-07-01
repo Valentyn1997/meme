@@ -5,6 +5,7 @@ import numpy as np
 from pymongo import MongoClient
 from telegram import InlineQueryResultCachedSticker
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters
+from telegram import ReplyKeyboardMarkup
 from src.telegram_bot.messages import MessagesLoader, MessageSaver, Chat
 from src.features.audio_supporter import AudioConverter
 
@@ -13,11 +14,11 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-MEME_CHAT_ID = -391131828
-BASIC_STICKER_SET = 'BigFaceEmoji'
-
 
 class TelegramBot:
+
+    MEME_CHAT_ID = -391131828
+    BASIC_STICKER_SET = 'BigFaceEmoji'
 
     def __init__(self, token, mongo_adress, model):
         # Bot connection
@@ -45,7 +46,7 @@ class TelegramBot:
         self.dp.add_handler(MessageHandler(Filters.text, self._handle_message, pass_user_data=True, pass_chat_data=True))
         logger.info('Text messages handler added.')
 
-        # Text messages handler
+        # Voice messages handler
         self.dp.add_handler(MessageHandler(Filters.voice, self._handle_audio, pass_user_data=True, pass_chat_data=True))
         logger.info('Audio messages handler added.')
 
@@ -68,7 +69,7 @@ class TelegramBot:
         logger.info('Errors handler added.')
 
         # Stickers / emojis to answer
-        self.stiker_set = self.updater.bot.get_sticker_set(BASIC_STICKER_SET).stickers
+        self.stiker_set = self.updater.bot.get_sticker_set(TelegramBot.BASIC_STICKER_SET).stickers
 
         # ML Model
         self.model = model
@@ -103,13 +104,13 @@ class TelegramBot:
 
         current_chat.add_message(update.message)
         self.saver.save_one(update.message)
-        MEME_CHAT_ID = current_chat.chat_id
+        TelegramBot.MEME_CHAT_ID = current_chat.chat_id
 
         # results = [[sticker.emoji for sticker in self.stiker_set]]
         # markup = ReplyKeyboardMarkup(results, one_time_keyboard=True, resize_keyboard=True, selective=True)
 
-        # self.updater.bot.edit_message_reply_markup(chat_id=MEME_CHAT_ID, message_id=884, reply_markup=markup)
-        # self.updater.bot.send_message(chat_id=MEME_CHAT_ID, text='choose:', reply_markup=markup)
+        # self.updater.bot.edit_message_reply_markup(chat_id=TelegramBot.MEME_CHAT_ID, message_id=884, reply_markup=markup)
+        # self.updater.bot.send_message(chat_id=TelegramBot.MEME_CHAT_ID, text='choose:', reply_markup=markup)
         # update.message.edit_text(, )
 
     def _handle_audio(self, update, context):
@@ -125,7 +126,7 @@ class TelegramBot:
         file_id = update.message.voice.file_id
         file = self.updater.bot.get_file(file_id)
 
-        tmp_inp = 'voice.ogg'
+        tmp_inp = 'voice.oga'
         tmp_out = 'voice.flac'
         file.download(tmp_inp)
 
@@ -140,13 +141,13 @@ class TelegramBot:
         """Handle the inline query."""
         # Loading active chat info
 
-        if MEME_CHAT_ID not in self.active_chats.keys():
+        if TelegramBot.MEME_CHAT_ID not in self.active_chats.keys():
             # Loading history of MEME chat
-            current_chat = Chat(chat_id=MEME_CHAT_ID, loader=self.loader)
+            current_chat = Chat(chat_id=TelegramBot.MEME_CHAT_ID, loader=self.loader)
             self.active_chats[current_chat.chat_id] = current_chat
             logger.info(f'Chat {current_chat.chat_id} activated.')
 
-        current_chat = self.active_chats[MEME_CHAT_ID]
+        current_chat = self.active_chats[TelegramBot.MEME_CHAT_ID]
 
         # Prediction
         results_emojis = self.model.predict(current_chat.messages_queue[0]['text'])
