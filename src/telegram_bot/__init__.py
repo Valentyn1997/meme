@@ -1,3 +1,4 @@
+import os
 import logging
 from uuid import uuid4
 import numpy as np
@@ -5,7 +6,6 @@ import numpy as np
 from pymongo import MongoClient
 from telegram import InlineQueryResultCachedSticker
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters
-from telegram import ReplyKeyboardMarkup
 from src.telegram_bot.messages import MessagesLoader, MessageSaver, Chat
 from src.features.audio_supporter import AudioConverter
 
@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 class TelegramBot:
-
     MEME_CHAT_ID = -391131828
     BASIC_STICKER_SET = 'BigFaceEmoji'
 
@@ -133,9 +132,16 @@ class TelegramBot:
         AudioConverter.convert_format(tmp_inp, tmp_out)
         text_msg = AudioConverter.audio_to_text(tmp_out)
 
+        self._delete_processed_file(tmp_inp)
+        self._delete_processed_file(tmp_out)
+
         update.message.text = text_msg
         current_chat.add_message(update.message)
         self.saver.save_one(update.message)
+
+    def _delete_processed_file(self, file):
+        os.remove(file)
+        print("Processed file removed")
 
     def _inlinequery(self, update, context):
         """Handle the inline query."""
