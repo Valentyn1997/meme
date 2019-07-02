@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 class TelegramBot:
     MEME_CHAT_ID = -391131828
     BASIC_STICKER_SET = 'BigFaceEmoji'
+    STICKER_PACKS = {'302891759': 'animulz', '246831753': 'BigFaceEmoji',
+                     '115944271': 'BigFaceEmoji', '272076950': 'BigFaceEmoji', '624961537': 'BigFaceEmoji'}
 
     def __init__(self, token, mongo_adress, model):
         # Bot connection
@@ -39,6 +41,7 @@ class TelegramBot:
         # Command handlers
         self.dp.add_handler(CommandHandler("start", self._start))
         self.dp.add_handler(CommandHandler("help", self._help))
+        self.dp.add_handler(CommandHandler("change_sticker_pack", self._change_sticker_pack))
         logger.info('Command handlers added.')
 
         # Text messages handler
@@ -63,13 +66,20 @@ class TelegramBot:
                                                pass_user_data=True, pass_chat_data=True, pass_groups=True))
         logger.info('Inline handler added.')
 
+        #Sticker messages handler
+        self.dp.add_handler(MessageHandler(Filters.sticker, self._handle_sticker))#, pass_user_data=True, pass_chat_data=True))
+        logger.info('Sticker handler added.')
+
         # Error handler
         self.dp.add_error_handler(self._error)
         logger.info('Errors handler added.')
 
         # Stickers / emojis to answer
         self.stiker_set = self.updater.bot.get_sticker_set(TelegramBot.BASIC_STICKER_SET).stickers
+        #for i in range(len(list(set(TelegramBot.STICKER_PACKS.values())))):
+        #    self.stiker_set = self.updater.bot.get_sticker_set(list(set(TelegramBot.STICKER_PACKS.values()))[i]).stickers
 
+        self.changing_emoji=0
         # ML Model
         self.model = model
 
@@ -90,6 +100,13 @@ class TelegramBot:
     def _help(self, update, context):
         """Send a message when the command /help is issued."""
         update.message.reply_text('Help!')
+
+
+    def _change_sticker_pack(self, update, context):
+        """Send a message when the command /help is issued."""
+        TelegramBot.STICKER_PACKS[str(update.message.from_user['id'])]=Chat(chat_id=update.message.chat_id, loader=self.loader).messages_queue[0]['text']
+        update.message.reply_text('The sticker pack has been changed!')
+
 
     def _handle_message(self, update, context):
 
@@ -139,6 +156,12 @@ class TelegramBot:
         current_chat.add_message(update.message)
         self.saver.save_one(update.message)
 
+    def _handle_sticker(self, update, context):
+        if str(update['_effective_user']['id']) in TelegramBot.STICKER_PACKS.keys() and update['_effective_chat']['id']>0:
+            TelegramBot.STICKER_PACKS[str(update.message.from_user['id'])] = str(update.message.sticker.set_name)
+            update.message.reply_text('The sticker pack has been changed!')
+
+
     def _delete_processed_file(self, file):
         os.remove(file)
         print("Processed file removed")
@@ -159,6 +182,10 @@ class TelegramBot:
         results_emojis = self.model.predict(current_chat.messages_queue[0]['text'])
         results_stickers = []
 
+
+
+        self.stiker_set = self.updater.bot.get_sticker_set(
+            TelegramBot.STICKER_PACKS[str(update['_effective_user']['id'])]).stickers
         # Inner join with stickerpack
         for emoji in results_emojis:
             results_stickers.extend([sticker for sticker in self.stiker_set if sticker.emoji == emoji])
@@ -173,8 +200,6 @@ class TelegramBot:
 
         update.inline_query.answer(results, cache_time=1)
 
-    def _start(self, update, context):
-        update.message.reply_text('Hello!')
 
     def _error(self, update, context):
         """Log Errors caused by Updates."""
