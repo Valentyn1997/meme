@@ -1,7 +1,7 @@
 import os
 import logging
 from uuid import uuid4
-import numpy as np
+import random
 
 from pymongo import MongoClient
 from telegram import InlineQueryResultCachedSticker
@@ -142,8 +142,9 @@ class TelegramBot:
         file_id = update.message.voice.file_id
         file = self.updater.bot.get_file(file_id)
 
-        tmp_inp = 'voice.oga'
-        tmp_out = 'voice.flac'
+        tmp_index = random.random()
+        tmp_inp = "voice" + str(tmp_index) + ".oga"
+        tmp_out = "voice" + str(tmp_index) + ".flac"
         file.download(tmp_inp)
 
         AudioConverter.convert_format(tmp_inp, tmp_out)
