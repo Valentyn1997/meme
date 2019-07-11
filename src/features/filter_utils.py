@@ -30,7 +30,6 @@ VARIATION_SELECTORS = ['\ufe00',
                        '\ufe0e',
                        '\ufe0f']
 
-
 unichr = chr
 ALL_CHARS = (unichr(i) for i in range(sys.maxunicode))
 CONTROL_CHARS = ''.join(map(unichr, list(range(0, 32)) + list(range(127, 160))))

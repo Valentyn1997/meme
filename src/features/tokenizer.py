@@ -1,5 +1,5 @@
 """
-Extracts and converys a Unicode string to tokens.
+Extracts and converts a Unicode string to tokens.
 Supports:
 - Abbreviations
 - URLs

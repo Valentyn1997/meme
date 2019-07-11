@@ -1,15 +1,12 @@
 import re
 import logging
-from sklearn.linear_model import LogisticRegression
 from sklearn.externals import joblib
 import json
 import numpy as np
 import emoji
-from sklearn.feature_extraction.text import CountVectorizer
 
 from torchmoji.sentence_tokenizer import SentenceTokenizer
 from torchmoji.model_def import torchmoji_emojis
-
 from torchmoji.global_variables import PRETRAINED_PATH, VOCAB_PATH
 
 import warnings

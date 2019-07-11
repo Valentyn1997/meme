@@ -1,13 +1,14 @@
 import json
-import re
 import string
 from sklearn.model_selection import train_test_split
 import numpy as np
 import nltk
+
 nltk.download('wordnet')
 from nltk.stem import WordNetLemmatizer
 import re
 from src import VOCAB_PATH
+
 
 class SentenceTokenizer:
     # Create array of integers (tokens) corresponding to input sentences.
@@ -69,12 +70,12 @@ class SentenceTokenizer:
     def tokenize_sentences(self, sentences, maxlen=30):
         """Converts a given list of sentences into a array of integers according to vocabulary"""
         sentences = ['I love mom\'s cooking',
-                          'I love how you never reply back..',
-                          'I love cruising with my homies',
-                          'I love messing with yo mind!!',
-                          'I love you and now you\'re just gone..',
-                          'This is shit',
-                          'This is the shit']
+                     'I love how you never reply back..',
+                     'I love cruising with my homies',
+                     'I love messing with yo mind!!',
+                     'I love you and now you\'re just gone..',
+                     'This is shit',
+                     'This is the shit']
         tokens_matr = np.zeros((len(sentences), maxlen), dtype='uint16')
         arr_tokens = []
         i = 0
@@ -84,7 +85,7 @@ class SentenceTokenizer:
             sentence = re.sub('[' + string.punctuation + ']', '', sentence).split()
             tokens = [self.vocabulary[k.lower()] if k.lower() in self.vocabulary.keys() else self.extend_vocabulary(k.lower()) for k in sentence]
             for j in range(len(tokens)):
-                if j<maxlen:
+                if j < maxlen:
                     tokens_matr[i, j] = tokens[j]
             i += 1
         self.save_vocabulary(self.vocabulary)
@@ -113,6 +114,3 @@ class SentenceTokenizer:
         result = [self.tokenize_sentences(s) for s in [train, val, test]]
 
         return result
-
-
-
