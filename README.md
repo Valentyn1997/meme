@@ -8,7 +8,7 @@ By launching the project, the telegram bot MEMER (*@meme_test_bot*) will be acti
 
 # Installation
 
-The project requires installed python 3.6 or higher versions.
+The project requires installed **python 3.6** or higher versions.
 
 
 Clone the project using `git clone` or download the zip archive and unpack it.
@@ -18,9 +18,21 @@ In order to start the project run the following commands:
 
   ```cd meme```
   
-* Install all the requirements using python interpreter:
+* Install the requirements using python interpreter:
 
     ```pip install -r requirements.txt```
+    
+* Install **ffmpeg**:
+
+    * On Ubuntu 
+        ```sudo apt install ffmpeg```
+    * On Windows
+        1. Download a distributive from a [source](https://ffmpeg.zeranoe.com/builds/)
+        1. Unpack
+        1. Add to PATH variable
+
+
+
     
 After successful installation of the requirements run the following command to start the bot:
 
