@@ -6,7 +6,7 @@ import re
 import string
 import emoji
 from itertools import groupby
-from tokenizer import RE_MENTION, RE_URL, SPECIAL_TOKENS
+from src.features.tokenizer import RE_MENTION, RE_URL, SPECIAL_TOKENS
 
 mention_re = re.compile(RE_MENTION)
 url_re = re.compile(RE_URL)
