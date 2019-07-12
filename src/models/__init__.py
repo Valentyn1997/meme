@@ -5,9 +5,9 @@ import json
 import numpy as np
 import emoji
 
-from torchmoji.sentence_tokenizer import SentenceTokenizer
+from src.features.sentence_tokenizer import SentenceTokenizer
 from torchmoji.model_def import torchmoji_emojis
-from torchmoji.global_variables import PRETRAINED_PATH, VOCAB_PATH
+from torchmoji.global_variables import PRETRAINED_PATH
 
 import warnings
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
@@ -58,11 +58,7 @@ class TorchMoji(ClassificationModel):
 
     def __init__(self):
         self.maxlen = 30
-
-        # Tokenizator
-        with open(VOCAB_PATH, 'r') as f:
-            self.vocabulary = json.load(f)
-        self.sent_tokenizer = SentenceTokenizer(self.vocabulary, self.maxlen)
+        self.sent_tokenizer = SentenceTokenizer()
 
         # Model weights
         self.model = torchmoji_emojis(PRETRAINED_PATH)
@@ -73,7 +69,7 @@ class TorchMoji(ClassificationModel):
         return ind[np.argsort(array[ind])][::-1]
 
     def predict(self, expression, top_n=5):
-        input, _, _ = self.sent_tokenizer.tokenize_sentences([expression])
+        input = self.sent_tokenizer.tokenize_sentences([expression])
         output_prob = self.model(input)[0]
 
         # Top emoji id

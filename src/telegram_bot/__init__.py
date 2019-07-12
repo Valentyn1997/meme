@@ -8,6 +8,7 @@ from telegram import InlineQueryResultCachedSticker
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters
 from src.telegram_bot.messages import MessagesLoader, MessageSaver, Chat
 from src.features.audio_supporter import AudioConverter
+from src.features.image_supporter import ImageCaptioningConverter
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -50,7 +51,13 @@ class TelegramBot:
 
         # Voice messages handler
         self.dp.add_handler(MessageHandler(Filters.voice, self._handle_audio, pass_user_data=True, pass_chat_data=True))
+        self.audio_converter = AudioConverter()
         logger.info('Audio messages handler added.')
+
+        # Image messages handler
+        self.dp.add_handler(MessageHandler(Filters.photo, self._handle_image, pass_user_data=True, pass_chat_data=True))
+        self.image_converter = ImageCaptioningConverter()
+        logger.info('Photo messages handler added.')
 
         # Sticker messages handler
         # self.dp.add_handler(
@@ -104,68 +111,85 @@ class TelegramBot:
 
     def _change_sticker_pack(self, update, context):
         """Send a message when the command /help is issued."""
-        TelegramBot.STICKER_PACKS[str(update.message.from_user['id'])]=Chat(chat_id=update.message.chat_id, loader=self.loader).messages_queue[0]['text']
+        TelegramBot.STICKER_PACKS[str(update.message.from_user['id'])] = Chat(chat_id=update.message.chat_id, loader=self.loader).messages_queue[0]['text']
         update.message.reply_text('The sticker pack has been changed!')
 
+    def activate_chat(self, update):
+        # Adding new chat to dict of active_chats
+        if update.message.chat_id not in self.active_chats.keys():
+            current_chat = Chat(chat_id=update.message.chat_id, loader=self.loader)
+            self.active_chats[current_chat.chat_id] = current_chat
+            logger.info(f'Chat {current_chat.chat_id} activated.')
+        else:  # Chat already exist
+            current_chat = self.active_chats[update.message.chat_id]
+        return current_chat
 
     def _handle_message(self, update, context):
 
-        # Adding new chat
-        if update.message.chat_id not in self.active_chats.keys():
-            current_chat = Chat(chat_id=update.message.chat_id, loader=self.loader)
-            self.active_chats[current_chat.chat_id] = current_chat
-            logger.info(f'Chat {current_chat.chat_id} activated.')
-        else:
-            current_chat = self.active_chats[update.message.chat_id]
+        current_chat = self.activate_chat(update)
 
+        # Saving message
         current_chat.add_message(update.message)
         self.saver.save_one(update.message)
+
         TelegramBot.MEME_CHAT_ID = current_chat.chat_id
-
-        # results = [[sticker.emoji for sticker in self.stiker_set]]
-        # markup = ReplyKeyboardMarkup(results, one_time_keyboard=True, resize_keyboard=True, selective=True)
-
-        # self.updater.bot.edit_message_reply_markup(chat_id=TelegramBot.MEME_CHAT_ID, message_id=884, reply_markup=markup)
-        # self.updater.bot.send_message(chat_id=TelegramBot.MEME_CHAT_ID, text='choose:', reply_markup=markup)
-        # update.message.edit_text(, )
 
     def _handle_audio(self, update, context):
 
-        # Adding new chat
-        if update.message.chat_id not in self.active_chats.keys():
-            current_chat = Chat(chat_id=update.message.chat_id, loader=self.loader)
-            self.active_chats[current_chat.chat_id] = current_chat
-            logger.info(f'Chat {current_chat.chat_id} activated.')
-        else:
-            current_chat = self.active_chats[update.message.chat_id]
+        current_chat = self.activate_chat(update)
 
+        # Downloading file
         file_id = update.message.voice.file_id
         file = self.updater.bot.get_file(file_id)
-
         tmp_index = random.random()
         tmp_inp = "voice" + str(tmp_index) + ".oga"
         tmp_out = "voice" + str(tmp_index) + ".flac"
         file.download(tmp_inp)
 
-        AudioConverter.convert_format(tmp_inp, tmp_out)
-        text_msg = AudioConverter.audio_to_text(tmp_out)
-
-        self._delete_processed_file(tmp_inp)
-        self._delete_processed_file(tmp_out)
-
+        # Voice to text
+        self.audio_converter.convert_format(tmp_inp, tmp_out)
+        text_msg = self.audio_converter.audio_to_text(tmp_out)
         update.message.text = text_msg
+
+        # Saving message with generated text
         current_chat.add_message(update.message)
         self.saver.save_one(update.message)
 
+        # Deleting temp files
+        self._delete_processed_file(tmp_inp)
+        self._delete_processed_file(tmp_out)
+
+    def _handle_image(self, update, context):
+
+        current_chat = self.activate_chat(update)
+
+        # Downloading file
+        file_id = update.message.photo[-1].file_id  # -1 is the biggest image
+        file = self.updater.bot.get_file(file_id)
+        tmp_index = random.random()
+        tmp = "image" + str(tmp_index) + ".jpg"
+        file.download(tmp)
+
+        # Image to text
+        text_msg = self.image_converter.image_to_text(tmp)
+        update.message.text = text_msg
+
+        # Saving message with generated text
+        current_chat.add_message(update.message)
+        self.saver.save_one(update.message)
+
+        # Deleting temp files
+        self._delete_processed_file(tmp)
+
     def _handle_sticker(self, update, context):
-        if str(update['_effective_user']['id']) in TelegramBot.STICKER_PACKS.keys() and update['_effective_chat']['id']>0:
+        if str(update['_effective_user']['id']) in TelegramBot.STICKER_PACKS.keys() and update['_effective_chat']['id'] > 0:
             TelegramBot.STICKER_PACKS[str(update.message.from_user['id'])] = str(update.message.sticker.set_name)
             update.message.reply_text('The sticker pack has been changed!')
 
 
     def _delete_processed_file(self, file):
         os.remove(file)
-        print("Processed file removed")
+        # print("Processed file removed")
 
     def _inlinequery(self, update, context):
         """Handle the inline query."""
@@ -183,10 +207,12 @@ class TelegramBot:
         results_emojis = self.model.predict(current_chat.messages_queue[0]['text'])
         results_stickers = []
 
+        if str(update['_effective_user']['id']) in TelegramBot.STICKER_PACKS:
+            self.stiker_set = self.updater.bot.get_sticker_set(
+                TelegramBot.STICKER_PACKS[str(update['_effective_user']['id'])]).stickers
+        else:
+            TelegramBot.STICKER_PACKS[str(update['_effective_user']['id'])] = TelegramBot.BASIC_STICKER_SET
 
-
-        self.stiker_set = self.updater.bot.get_sticker_set(
-            TelegramBot.STICKER_PACKS[str(update['_effective_user']['id'])]).stickers
         # Inner join with stickerpack
         for emoji in results_emojis:
             results_stickers.extend([sticker for sticker in self.stiker_set if sticker.emoji == emoji])

@@ -4,6 +4,10 @@ MONGO_ADDRESS = 'mongodb+srv://meme:meme_dream_team@cluster0-ti8wf.mongodb.net/t
 from src.telegram_bot import *
 from src.models import *
 
+# Ignore warnings
+import warnings
+warnings.filterwarnings("ignore")
+
 def main():
     # model = LogRegression(path_to_model=r'models\logistic_regression\log_regression_0.81.model',
     #                       path_to_vectorizer=r'models\logistic_regression\vectorizer.vec',
