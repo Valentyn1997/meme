@@ -42,5 +42,6 @@ class Chat:
             self.messages_queue.pop(-1)
         logger.info(f'Message {message.message_id} added to chat {self.chat_id}.')
 
+
     def __eq__(self, other):
         return self.chat_id == other.chat_id

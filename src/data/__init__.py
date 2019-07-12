@@ -4,7 +4,6 @@ import torch
 import numpy as np
 
 from src import VOCAB_PATH
-#from torchmoji.sentence_tokenizer import SentenceTokenizer
 from src.features.sentence_tokenizer import SentenceTokenizer
 
 

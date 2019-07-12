@@ -3,7 +3,7 @@ from src.features.sentence_tokenizer import SentenceTokenizer
 import json
 from src import TRAIN_DATASET_PATH, VOCAB_PATH
 
-if __name__== "__main__" :
+if __name__ == "__main__":
     data = pd.read_csv(TRAIN_DATASET_PATH)
     sentences = data.text
     print('sentences:')

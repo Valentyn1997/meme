@@ -6,7 +6,7 @@ import re
 import string
 import emoji
 from itertools import groupby
-from tokenizer import RE_MENTION, RE_URL, SPECIAL_TOKENS
+from src.features.tokenizer import RE_MENTION, RE_URL, SPECIAL_TOKENS
 
 mention_re = re.compile(RE_MENTION)
 url_re = re.compile(RE_URL)
@@ -29,7 +29,6 @@ VARIATION_SELECTORS = ['\ufe00',
                        '\ufe0d',
                        '\ufe0e',
                        '\ufe0f']
-
 
 unichr = chr
 ALL_CHARS = (unichr(i) for i in range(sys.maxunicode))

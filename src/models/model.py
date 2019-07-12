@@ -5,9 +5,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 import torch.nn as nn
-from torchmoji.global_variables import NB_TOKENS, PRETRAINED_PATH
 from src.data import DataGenerator
-from src import TRAIN_DATASET_PATH, VA_REGRESSION_WEIGHTS_PATH
+from src import TRAIN_DATASET_PATH, VA_REGRESSION_WEIGHTS_PATH, PRETRAINED_WEIGHTS_PATH
 
 from tqdm import tqdm
 import pandas as pd
@@ -67,7 +66,7 @@ def train():
 
     # Initialization
     num_epochs = 3
-    model = RegressionTorchMoji(PRETRAINED_PATH, nb_tokens=train_generator.vocab_size, final_dropout_rate=0.5)
+    model = RegressionTorchMoji(PRETRAINED_WEIGHTS_PATH, nb_tokens=train_generator.vocab_size, final_dropout_rate=0.5)
     inner_loss = nn.MSELoss()
 
 
