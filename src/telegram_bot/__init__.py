@@ -19,8 +19,11 @@ logger = logging.getLogger(__name__)
 class TelegramBot:
     MEME_CHAT_ID = -391131828
     BASIC_STICKER_SET = 'BigFaceEmoji'
-    STICKER_PACKS = {'302891759': 'animulz', '246831753': 'BigFaceEmoji',
-                     '115944271': 'BigFaceEmoji', '272076950': 'BigFaceEmoji', '624961537': 'BigFaceEmoji'}
+    STICKER_PACKS = {'302891759': ['animulz', 'BigFaceEmoji'], '246831753': ['BigFaceEmoji'],
+                     '115944271': ['BigFaceEmoji'], '272076950': ['BigFaceEmoji'], '624961537': ['BigFaceEmoji']}
+
+    MAX_NUMBER=10
+    MAX_EMOJIS = 4
 
     def __init__(self, token, mongo_adress, model):
         # Bot connection
@@ -42,7 +45,10 @@ class TelegramBot:
         # Command handlers
         self.dp.add_handler(CommandHandler("start", self._start))
         self.dp.add_handler(CommandHandler("help", self._help))
-        self.dp.add_handler(CommandHandler("change_sticker_pack", self._change_sticker_pack))
+        self.dp.add_handler(CommandHandler("add_sticker_pack", self._add_sticker_pack))
+        self.dp.add_handler(CommandHandler("delete_sticker_pack", self._delete_sticker_pack))
+        self.dp.add_handler(CommandHandler("max_number_stickers", self._max_number_stickers))
+        self.dp.add_handler(CommandHandler("max_number_emojis", self._max_number_emojis))
         logger.info('Command handlers added.')
 
         # Text messages handler
@@ -58,11 +64,6 @@ class TelegramBot:
         self.dp.add_handler(MessageHandler(Filters.photo, self._handle_image, pass_user_data=True, pass_chat_data=True))
         self.image_converter = ImageCaptioningConverter()
         logger.info('Photo messages handler added.')
-
-        # Sticker messages handler
-        # self.dp.add_handler(
-        #     MessageHandler(Filters.sticker, self._handle_message, pass_user_data=True, pass_chat_data=True))
-        # logger.info('Sticker messages handler added.')
 
         # Images messages handler
         self.dp.add_handler(MessageHandler(Filters.photo, self._handle_message, pass_user_data=True, pass_chat_data=True))
@@ -83,8 +84,6 @@ class TelegramBot:
 
         # Stickers / emojis to answer
         self.stiker_set = self.updater.bot.get_sticker_set(TelegramBot.BASIC_STICKER_SET).stickers
-        #for i in range(len(list(set(TelegramBot.STICKER_PACKS.values())))):
-        #    self.stiker_set = self.updater.bot.get_sticker_set(list(set(TelegramBot.STICKER_PACKS.values()))[i]).stickers
 
         self.changing_emoji=0
         # ML Model
@@ -109,10 +108,37 @@ class TelegramBot:
         update.message.reply_text('Help!')
 
 
-    def _change_sticker_pack(self, update, context):
-        """Send a message when the command /help is issued."""
-        TelegramBot.STICKER_PACKS[str(update.message.from_user['id'])] = Chat(chat_id=update.message.chat_id, loader=self.loader).messages_queue[0]['text']
-        update.message.reply_text('The sticker pack has been changed!')
+    def _add_sticker_pack(self, update, context):
+        """Send a message when the command /add_sticker_pack is issued."""
+        TelegramBot.STICKER_PACKS[str(update.message.from_user['id'])].append(Chat(chat_id=update.message.chat_id, loader=self.loader).messages_queue[0]['text'])
+        update.message.reply_text('The sticker pack has been added!')
+
+    def _delete_sticker_pack(self, update, context):
+        """Send a message when the command /delete_sticker_pack is issued."""
+        try:
+            pack = TelegramBot.STICKER_PACKS[str(update['_effective_user']['id'])]
+            pack.remove(Chat(chat_id=update.message.chat_id, loader=self.loader).messages_queue[0]['text'])
+            TelegramBot.STICKER_PACKS[str(update.message.from_user['id'])]=pack
+            update.message.reply_text('The sticker pack has been removed!')
+        except:
+            update.message.reply_text('There is no such sticker pack in your collection!')
+
+    def _max_number_stickers(self, update, context):
+        """Send a message when the command /delete_sticker_pack is issued."""
+        try:
+            TelegramBot.MAX_NUMBER=int(Chat(chat_id=update.message.chat_id, loader=self.loader).messages_queue[0]['text'])
+            update.message.reply_text('The maximum number of stickers has been specified!')
+        except:
+            update.message.reply_text('Use number for maximum number of stickers!')
+
+    def _max_number_emojis(self, update, context):
+        """Send a message when the command /delete_sticker_pack is issued."""
+        try:
+            TelegramBot.MAX_EMOJIS=int(Chat(chat_id=update.message.chat_id, loader=self.loader).messages_queue[0]['text'])
+            update.message.reply_text('The maximum number of emojis has been specified!')
+        except:
+            update.message.reply_text('Use number for maximum number of emojis!')
+
 
     def activate_chat(self, update):
         # Adding new chat to dict of active_chats
@@ -183,8 +209,8 @@ class TelegramBot:
 
     def _handle_sticker(self, update, context):
         if str(update['_effective_user']['id']) in TelegramBot.STICKER_PACKS.keys() and update['_effective_chat']['id'] > 0:
-            TelegramBot.STICKER_PACKS[str(update.message.from_user['id'])] = str(update.message.sticker.set_name)
-            update.message.reply_text('The sticker pack has been changed!')
+            TelegramBot.STICKER_PACKS[str(update.message.from_user['id'])].append(str(update.message.sticker.set_name))
+            update.message.reply_text('The sticker pack has been added!')
 
 
     def _delete_processed_file(self, file):
@@ -208,16 +234,30 @@ class TelegramBot:
         results_stickers = []
 
         if str(update['_effective_user']['id']) in TelegramBot.STICKER_PACKS:
-            self.stiker_set = self.updater.bot.get_sticker_set(
-                TelegramBot.STICKER_PACKS[str(update['_effective_user']['id'])]).stickers
+            pack=TelegramBot.STICKER_PACKS[str(update['_effective_user']['id'])]
+            user_packs=[]
+            for i in range(len(pack)):
+                user_packs.append(self.updater.bot.get_sticker_set(pack[i]).stickers)
+            self.stiker_set = list(set([item for sublist in user_packs for item in sublist]))
         else:
             TelegramBot.STICKER_PACKS[str(update['_effective_user']['id'])] = TelegramBot.BASIC_STICKER_SET
+            self.stiker_set = TelegramBot.BASIC_STICKER_SET
+
+
 
         # Inner join with stickerpack
         for emoji in results_emojis:
-            results_stickers.extend([sticker for sticker in self.stiker_set if sticker.emoji == emoji])
+            stickers=[]
+            i = 0
+            for sticker in self.stiker_set:
+                if sticker.emoji == emoji and i<TelegramBot.MAX_EMOJIS:
+                    stickers.append(sticker)
+                    i+=1
+            results_stickers.extend(stickers)
+            #results_stickers.extend([sticker for sticker in self.stiker_set if sticker.emoji == emoji])
         logger.info(f'Recommending {len(results_stickers)} stickers.')
 
+        results_stickers=results_stickers[:TelegramBot.MAX_NUMBER]
         # Sending recommendation
         results = [
             InlineQueryResultCachedSticker(id=uuid4(),
