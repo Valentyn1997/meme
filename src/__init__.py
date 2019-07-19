@@ -2,22 +2,23 @@ import os
 from os.path import abspath, dirname, exists
 import torch
 from google_drive_downloader import GoogleDriveDownloader as gdd
-from src.utils import dropbox_download
+# from src.utils import dropbox_download
+import wget
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 ROOT_PATH = dirname(dirname(abspath(__file__)))
 
 # Torchmoji
 from torchmoji.global_variables import PRETRAINED_PATH as PRETRAINED_WEIGHTS_PATH
 if not exists(PRETRAINED_WEIGHTS_PATH):
     os.makedirs(os.path.dirname(PRETRAINED_WEIGHTS_PATH), exist_ok=True)
-    dropbox_download(url='https://www.dropbox.com/s/q8lax9ary32c7t9/pytorch_model.bin?dl=1',
-                     dest_path=PRETRAINED_WEIGHTS_PATH)
+    wget.download(url='https://www.dropbox.com/s/q8lax9ary32c7t9/pytorch_model.bin?dl=1',
+                  out=PRETRAINED_WEIGHTS_PATH, bar=wget.bar_thermometer)
+    # dropbox_download(url='https://www.dropbox.com/s/q8lax9ary32c7t9/pytorch_model.bin?dl=1',
+    #                  dest_path=PRETRAINED_WEIGHTS_PATH)
 TRAIN_DATASET_PATH = f'{ROOT_PATH}/data/processed/appendix1_test.csv'
-VA_REGRESSION_WEIGHTS_PATH = f'{ROOT_PATH}/models/text2va/va_regression.pth'
-# VOCAB_PATH = f'{ROOT_PATH}/models/vocabulary.json'
-from torchmoji.global_variables import VOCAB_PATH
+#VA_REGRESSION_WEIGHTS_PATH = f'{ROOT_PATH}/models/text2va/va_regression.pth'
+VOCAB_PATH = f'{ROOT_PATH}/models/vocabulary.json'
 
 # Image captioning
 IMAGE_CAPTIONING_FOLDER = f'{ROOT_PATH}/models/captioning/'
