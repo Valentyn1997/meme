@@ -19,12 +19,16 @@ if not exists(PRETRAINED_WEIGHTS_PATH):
 TRAIN_DATASET_PATH = f'{ROOT_PATH}/data/processed/appendix1_test.csv'
 #VA_REGRESSION_WEIGHTS_PATH = f'{ROOT_PATH}/models/text2va/va_regression.pth'
 VOCAB_PATH = f'{ROOT_PATH}/models/vocabulary.json'
+print(f'Torchmoji weights: {PRETRAINED_WEIGHTS_PATH}')
+print(f'Torchmoji vocabulary: {VOCAB_PATH}')
 
 # Image captioning
 IMAGE_CAPTIONING_FOLDER = f'{ROOT_PATH}/models/captioning/'
 os.makedirs(IMAGE_CAPTIONING_FOLDER, exist_ok=True)
 IMAGE_CAPTIONING_WEIGHTS_PATH = f'{IMAGE_CAPTIONING_FOLDER}/BEST_checkpoint_coco_5_cap_per_img_5_min_word_freq.pth.tar'
 IMAGE_CAPTIONING_WORDMAP_PATH = f'{IMAGE_CAPTIONING_FOLDER}/WORDMAP_coco_5_cap_per_img_5_min_word_freq.json'
+print(f'Image captioning weights: {IMAGE_CAPTIONING_WEIGHTS_PATH}')
+print(f'Image captioning word map: {IMAGE_CAPTIONING_WORDMAP_PATH}')
 
 if not exists(IMAGE_CAPTIONING_WEIGHTS_PATH):
     print('Downloading weights for image captioning:')
