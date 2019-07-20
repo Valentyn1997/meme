@@ -1,13 +1,13 @@
 import json
+import re
 import string
 from sklearn.model_selection import train_test_split
 import numpy as np
 import nltk
+nltk.download('wordnet')
 from nltk.stem import WordNetLemmatizer
 import re
 from src import VOCAB_PATH
-
-nltk.download('wordnet')
 
 class SentenceTokenizer:
     # Create array of integers (tokens) corresponding to input sentences.
@@ -24,6 +24,7 @@ class SentenceTokenizer:
             self.vocabulary = self.lemmatize_vocab(self.read_json())
         else:
             self.vocabulary = self.lemmatize_vocab(vocabulary)
+
 
     def decontracted(self, phrase):
         # specific
@@ -63,23 +64,30 @@ class SentenceTokenizer:
     def save_vocabulary(self, vocabulary):
 
         with open(VOCAB_PATH, 'w') as outfile:
-            json.dump(vocabulary, outfile)
+            json.dump(vocabulary, outfile, indent=2)
         outfile.close()
 
-    def tokenize_sentences(self, sentences, maxlen=30):
+    def tokenize_sentences(self, sentences, maxlen=50, save=False):
         """Converts a given list of sentences into a array of integers according to vocabulary"""
+
         tokens_matr = np.zeros((len(sentences), maxlen), dtype='uint16')
         i = 0
         for sentence in sentences:
             sentence = self.decontracted(sentence)
             # take only words
             sentence = re.sub('[' + string.punctuation + ']', '', sentence).split()
-            tokens = [self.vocabulary[k.lower()] if k.lower() in self.vocabulary.keys() else self.extend_vocabulary(k.lower()) for k in sentence]
+            tokens = [self.vocabulary[k.lower()] if k.lower() in self.vocabulary.keys() else self.vocabulary['CUSTOM_UNKNOWN'] for k in sentence]
+
+            # Empty sentence
+            if len(tokens) == 0:
+                tokens = [self.vocabulary['CUSTOM_UNKNOWN']]
+
             for j in range(len(tokens)):
                 if j < maxlen:
                     tokens_matr[i, j] = tokens[j]
             i += 1
-        self.save_vocabulary(self.vocabulary)
+        if save:
+            self.save_vocabulary(self.vocabulary)
         return tokens_matr
 
     def to_sentence(self, arr_tokens):
