@@ -5,10 +5,8 @@ import json
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import skimage.transform
 import cv2
 from PIL import Image
-# import src.features.models as models
 import sys
 
 from src import DEVICE, IMAGE_CAPTIONING_WEIGHTS_PATH, IMAGE_CAPTIONING_WORDMAP_PATH, ROOT_PATH
