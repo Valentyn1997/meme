@@ -9,6 +9,7 @@ from nltk.stem import WordNetLemmatizer
 import re
 from src import VOCAB_PATH
 
+
 class SentenceTokenizer:
     # Create array of integers (tokens) corresponding to input sentences.
 
