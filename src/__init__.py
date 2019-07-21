@@ -16,9 +16,10 @@ if not exists(PRETRAINED_WEIGHTS_PATH):
                   out=PRETRAINED_WEIGHTS_PATH, bar=wget.bar_thermometer)
     # dropbox_download(url='https://www.dropbox.com/s/q8lax9ary32c7t9/pytorch_model.bin?dl=1',
     #                  dest_path=PRETRAINED_WEIGHTS_PATH)
-TRAIN_DATASET_PATH = f'{ROOT_PATH}/data/processed/appendix1_test.csv'
-#VA_REGRESSION_WEIGHTS_PATH = f'{ROOT_PATH}/models/text2va/va_regression.pth'
+TRAIN_DATASET_PATH = f'{ROOT_PATH}/data/processed/Dataset_tweets.csv'
+VA_REGRESSION_WEIGHTS_PATH = f'{ROOT_PATH}/models/text2va/va_regression.pth'
 VOCAB_PATH = f'{ROOT_PATH}/models/vocabulary.json'
+PRETRAINED_VOCABULARY_SIZE = 50000
 print(f'Torchmoji weights: {PRETRAINED_WEIGHTS_PATH}')
 print(f'Torchmoji vocabulary: {VOCAB_PATH}')
 

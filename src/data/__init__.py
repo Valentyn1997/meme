@@ -47,8 +47,13 @@ class DataGenerator:
 
         # Tokenize sentences
         X = self.sent_tokenizer.tokenize_sentences(X)
+        X = X.astype('int64')
 
-        return torch.from_numpy(X.astype('int64')).long(), torch.from_numpy(y).float()
+        # Converting to torch tensors
+        X = torch.from_numpy(X).long()
+        y = torch.from_numpy(y).float()
+
+        return X, y
 
     def on_epoch_end(self):
         """Updates indexes after each epoch"""

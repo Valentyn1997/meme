@@ -9,6 +9,7 @@ from nltk.stem import WordNetLemmatizer
 import re
 from src import VOCAB_PATH
 
+
 class SentenceTokenizer:
     # Create array of integers (tokens) corresponding to input sentences.
 
@@ -86,6 +87,9 @@ class SentenceTokenizer:
                 if j < maxlen:
                     tokens_matr[i, j] = tokens[j]
             i += 1
+
+
+
         if save:
             self.save_vocabulary(self.vocabulary)
         return tokens_matr
@@ -113,3 +117,6 @@ class SentenceTokenizer:
         result = [self.tokenize_sentences(s) for s in [train, val, test]]
 
         return result
+
+
+
