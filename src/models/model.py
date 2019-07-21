@@ -51,9 +51,9 @@ class RegressionTorchMoji(TorchMoji):
         # Calling torchmoji
         x, att_weights = super().forward(input_seqs)  # ATTENTION, x is tensor, so gradient doesn't propagate back !!!
 
-        x = self.final_dropout(x)
-        x = self.fc_layer(x)
-        x = nn.ReLU()(x)
+        # x = self.final_dropout(x)
+        # x = self.fc_layer(x)
+        # x = nn.ReLU()(x)
         x = self.final_dropout(x)
         x = self.output_layer(x)
         x = self.sigmoid(x)
@@ -70,7 +70,9 @@ def train():
 
     # Data
     data = pd.read_csv(TRAIN_DATASET_PATH)
-    X, y = np.array(data.text), np.array(data[['V', 'A']])
+    data = data.dropna()
+    X, y = np.array(data.Tweet), np.array(data[['V', 'A']])
+    print(y.min(), y.max())
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
     train_generator = DataGenerator(X_train, y_train, batch_size=64)
@@ -86,7 +88,7 @@ def train():
     inner_loss = nn.MSELoss()
     outer_loss = nn.MSELoss()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
     # Training
 
