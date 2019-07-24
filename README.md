@@ -3,7 +3,7 @@ In this project, we introduce the concept of Multimodal Emotion Messaging Estima
 1. To recommend emojis on instant messaging platforms which offer recommendations of various emojis relevant to the context of the ongoing conversation between users. 
 2. Creating implicit coherent massive multimodal (text, audios, images) dataset for the multimodal sentiment analysis. 
 
-In MEME we are using a pre-trained model for sentiment analysis with valence and arousal (VA) scores. In the text model we are concatenating n-last messages, use embeddings, bidirectional LSTM (Long short-term memory) and attention layers. Audio messages are converted to text representation and processed further as a text message.[[1]](https://pypi.org/project/SpeechRecognition/) To work with images, we use image captioning model in order to transform images into sentences. [[2]](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning) Finally, as an output we get VA scores for the message and get respective to these scores emojis. This is how our system works.
+In MEME we are using a pre-trained model for sentiment analysis with valence and arousal (VA) scores. In the text model we are concatenating n-last messages, use embeddings, bidirectional LSTM (Long short-term memory) and attention layers. Audio messages are converted to text representation and processed further as a text message. [[1]](https://pypi.org/project/SpeechRecognition/) To work with images, we use image captioning model in order to transform images into sentences. [[2]](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning) Finally, as an output we get VA scores for the message and get respective to these scores emojis. This is how our system works.
 
 
 # General idea
