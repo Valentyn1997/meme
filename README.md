@@ -36,13 +36,25 @@ In order to start the project run the following commands:
     
 After successful installation of the requirements run the following command to start the bot:
 
-``` PYTHONPATH=. python3 main.py ```
+``` PYTHONPATH=. python3 main.py --token=<Telegram_bot_token> --mongo_address=<MongoDB_Address>```
+
+You can find out more about `Telegram_bot_token` and `MongoDB_Address` in the following section.
 
 Invite the bot *@meme_test_bot* to your telegram group chat and enjoy recommendations. 
 
 
 
-# Server Connection
+# Database and Server Connection
+## Telegram Bot Token
+
+How to set up own Telegram Bot: https://core.telegram.org/bots.
+
+## MongoDb Address
+
+One should create database, called `meme` with the collection `messages`. Then - `mongodb_address` is just a connection string:
+
+![image](/uploads/7c24b7113f4181289dabd7b0c29b68f9/image.png)
+
 ## Ubuntu Host
 * IP: 138.246.232.234
 * Sudo User: meme
