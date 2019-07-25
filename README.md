@@ -31,7 +31,7 @@ In order to start the project run the following commands:
 
   ```cd meme```
   
-* Install the requirements using python interpreter:
+* Install all the requirements stated in the requirements.txt file. You can do it, for example, using python interpreter:
 
     ```pip install -r requirements.txt```
     
