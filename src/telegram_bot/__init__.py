@@ -101,11 +101,11 @@ class TelegramBot:
 
     def _start(self, update, context):
         """Send a message when the command /start is issued."""
-        update.message.reply_text('Hi!')
+        update.message.reply_text('Hi, I am ready to make you sticker recommendations. Just add me to the group chat so I can recommend you stickers!')
 
     def _help(self, update, context):
         """Send a message when the command /help is issued."""
-        update.message.reply_text('Help!')
+        update.message.reply_text('/start – start the MEME bot \n/help – the description of bot commands \n/add_sticker_pack – add the new sticker pack into the collection of recommendations. First send the name of the sticker pack, then call the command \n/delete_sticker_pack – delete the sticker pack from the collection. First send the name of the sticker pack, then call the command \n/max_number_stickers – set the maximum number of recommended stickers. First send the name of maximum number, then call the command \n/max_number_emojis – set the maximum number of stickers per emoji. First send the name of maximum number, then call the command')
 
 
     def _add_sticker_pack(self, update, context):
