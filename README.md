@@ -1,5 +1,9 @@
-# meme
-In this project, we introduce the concept of Multimodal Emotion Messaging Estimator (MEME), a human computation system, which is a recommender system in nature. MEME has two main objectives. Firstly, to recommend emojis on instant messaging platforms which offer recommendations of various emojis relevant to the context of the ongoing conversation between users. Secondly, creating implicit coherent massive multimodal (text, audios, images) dataset for the multimodal sentiment analysis. In this project, we are using a pre-trained model for sentiment analysis with valence and arousal (VA) scores. In the text model we are concatenating n-last messages, use embeddings, bidirectional LSTM (Long short-term memory) and attention layers. Audio messages are converted to text representation and processed further as a text message. Finally, as an output we get VA scores for the message and get respective to these scores emojis. This is how our system works.
+# MEME
+In this project, we introduce the concept of Multimodal Emotion Messaging Estimator (MEME), a human computation system, which is a recommender system in nature. MEME has two main objectives: 
+1. To recommend emojis on instant messaging platforms which offer recommendations of various emojis relevant to the context of the ongoing conversation between users. 
+2. Creating implicit coherent massive multimodal (text, audios, images) dataset for the multimodal sentiment analysis. 
+
+In MEME we are using a pre-trained model [[1]](https://github.com/huggingface/torchMoji) for sentiment analysis with valence and arousal (VA) scores. In the text model we are concatenating n-last messages, use embeddings, bidirectional LSTM (Long short-term memory) and attention layers. Audio messages are converted to text representation and processed further as a text message. [[2]](https://pypi.org/project/SpeechRecognition/) To work with images, we use image captioning model in order to transform images into sentences. [[3]](https://github.com/sgrvinod/a-PyTorch-Tutorial-to-Image-Captioning) Finally, as an output we get VA scores for the message and get respective to these scores emojis. This is how our system works.
 
 
 # General idea
