@@ -9,14 +9,12 @@ In MEME we are using a pre-trained model [[1]](https://github.com/huggingface/to
 # General idea
 
 By launching the project, the telegram bot MEMER (*@meme_test_bot*) will be active. The bot should be invited to a group chat in telegram in order to enable recommendations. 
-
-<img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3037.jpg" width="20%" height="20%">
-
-<img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3038.PNG" width="20%" height="20%">
-
-<img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3027.jpg" width="20%" height="20%">
-
-<img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3095.jpg" width="20%" height="20%">
+<p float="left">
+  <img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3037.jpg" width="20%" height="20%"/>
+  <img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3038.PNG" width="20%" height="20%"/>
+  <img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3027.jpg" width="20%" height="20%"/>
+  <img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3095.jpg" width="20%" height="20%"/>
+</p>
 
 
 # Installation
@@ -67,9 +65,3 @@ How to set up own Telegram Bot: https://core.telegram.org/bots.
 One should create database, called `meme` with the collection `messages`. Then - `mongodb_address` is just a connection string:
 
 ![image](https://github.com/Valentyn1997/meme/blob/master/images/image.png)
-
-## Ubuntu Host
-* IP: 138.246.232.234
-* Sudo User: meme
-* Password, will be sent to your email address by yingding
-
