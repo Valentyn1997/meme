@@ -10,13 +10,13 @@ In MEME we are using a pre-trained model [[1]](https://github.com/huggingface/to
 
 By launching the project, the telegram bot MEMER (*@meme_test_bot*) will be active. The bot should be invited to a group chat in telegram in order to enable recommendations. 
 
-<img src="/uploads/df4fd5c329c603adcb942b8cd81550c0/IMG_3037.jpg" width="20%" height="20%">
+<img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3037.jpg" width="20%" height="20%">
 
-<img src="/uploads/f4becdb1163acd2a66acfe03a5d5e0b7/IMG_3038.PNG" width="20%" height="20%">
+<img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3038.PNG" width="20%" height="20%">
 
-<img src="/uploads/00e425eac2715bf5250c033c1ee100e7/IMG_3027.jpg" width="20%" height="20%">
+<img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3027.jpg" width="20%" height="20%">
 
-<img src="/uploads/593151596827b01e62fbf1d4500e81b8/IMG_3095.jpg" width="20%" height="20%">
+<img src="https://github.com/Valentyn1997/meme/blob/master/images/IMG_3095.jpg" width="20%" height="20%">
 
 
 # Installation
@@ -66,7 +66,7 @@ How to set up own Telegram Bot: https://core.telegram.org/bots.
 
 One should create database, called `meme` with the collection `messages`. Then - `mongodb_address` is just a connection string:
 
-![image](/uploads/7c24b7113f4181289dabd7b0c29b68f9/image.png)
+![image](https://github.com/Valentyn1997/meme/blob/master/images/image.png)
 
 ## Ubuntu Host
 * IP: 138.246.232.234
