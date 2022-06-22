@@ -2,7 +2,7 @@ Pillow
 opencv-python
 torchvision==0.2
 tqdm
-numpy==1.13.1
+numpy==1.22.0
 pandas==0.24.2
 pymongo==3.8.0
 torch==0.4.1
